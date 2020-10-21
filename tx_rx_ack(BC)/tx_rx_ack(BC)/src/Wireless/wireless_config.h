@@ -59,9 +59,9 @@
 #define DEFAULT_PAN_ID          0xCAFE
 
 //Direccion del coordinador
-//#define SRC_ADDR				0xAA01
+#define SRC_ADDR				0xAA01
 //Direccion del nodo
-#define SRC_ADDR				0xAA02
+//#define SRC_ADDR				0xAA02
 #define SRC_PAN_ID              0xCAFE
 
 #define CHANNEL_TRANSMIT_RECEIVE		18
@@ -70,9 +70,9 @@
 //Direccion destino broadcast
 //#define DST_ADDR		0xFFFF
 //Direccion destino unicast
-#define DST_ADDR		0xAA01
+#define DST_ADDR		0xAA02
 #define DST_PAN_ID      0xCAFE
-#define ACK_REQ			1
+#define ACK_REQ			0
 #define FRAME_RETRY		0
 #define CSMA_MODE		CSMA_UNSLOTTED
 
