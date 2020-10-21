@@ -23,13 +23,13 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
   9 .debug_frame  00001790  00000000  00000000  0001d3b8  2**2
                   CONTENTS, READONLY, DEBUGGING
- 10 .debug_str    0001effd  00000000  00000000  0001eb48  2**0
+ 10 .debug_str    0001efe7  00000000  00000000  0001eb48  2**0
                   CONTENTS, READONLY, DEBUGGING
- 11 .debug_loc    00006172  00000000  00000000  0003db45  2**0
+ 11 .debug_loc    00006172  00000000  00000000  0003db2f  2**0
                   CONTENTS, READONLY, DEBUGGING
- 12 .debug_ranges 00000668  00000000  00000000  00043cb7  2**0
+ 12 .debug_ranges 00000668  00000000  00000000  00043ca1  2**0
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_macro  0000af79  00000000  00000000  0004431f  2**0
+ 13 .debug_macro  0000af79  00000000  00000000  00044309  2**0
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -1049,9 +1049,21 @@ void wireless_init(void)
      692:	08 95       	ret
 
 00000694 <board_init>:
+
+/**
+ * \brief Initializes the board components
+ */
+void board_init(void)
+{
      694:	08 95       	ret
 
 00000696 <modules_init>:
+
+/**
+ * \brief Initializes the modules added by the Project Wizard
+ */
+void modules_init(void)
+{
      696:	08 95       	ret
 
 00000698 <sysclk_init>:
@@ -1520,69 +1532,156 @@ void wireless_init(void)
      a72:	08 95       	ret
 
 00000a74 <pal_init>:
+}
+
+bool pal_is_timer_running(uint8_t timer_id)
+{
+	return sw_timer_is_running(timer_id);
+}
      a74:	80 e0       	ldi	r24, 0x00	; 0
      a76:	08 95       	ret
 
 00000a78 <pal_task>:
+ *
+ * This function calls sio & timer handling functions.
+ */
+void pal_task(void)
+{
+	sw_timer_service();
      a78:	aa cf       	rjmp	.-172    	; 0x9ce <sw_timer_service>
      a7a:	08 95       	ret
 
 00000a7c <bmm_buffer_init>:
+ * This function initializes the buffer module.
+ * This function should be called before using any other functionality
+ * of buffer module.
+ */
+void bmm_buffer_init(void)
+{
      a7c:	cf 93       	push	r28
      a7e:	df 93       	push	r29
+	/* Initialize free buffer queue for large buffers */
+#if (TOTAL_NUMBER_OF_LARGE_BUFS > 0)
+    #ifdef ENABLE_QUEUE_CAPACITY
+	qmm_queue_init(&free_large_buffer_q, TOTAL_NUMBER_OF_LARGE_BUFS);
+    #else
+	qmm_queue_init(&free_large_buffer_q);
      a80:	80 ec       	ldi	r24, 0xC0	; 192
      a82:	92 e0       	ldi	r25, 0x02	; 2
      a84:	b0 d0       	rcall	.+352    	; 0xbe6 <qmm_queue_init>
+	for (index = 0; index < TOTAL_NUMBER_OF_LARGE_BUFS; index++) {
+		/*
+		 * Initialize the buffer body pointer with address of the
+		 * buffer body
+		 */
+		buf_header[index].body = buf_pool + (index * LARGE_BUFFER_SIZE);
      a86:	c5 ec       	ldi	r28, 0xC5	; 197
      a88:	d2 e0       	ldi	r29, 0x02	; 2
      a8a:	81 ed       	ldi	r24, 0xD1	; 209
      a8c:	92 e0       	ldi	r25, 0x02	; 2
      a8e:	99 83       	std	Y+1, r25	; 0x01
      a90:	88 83       	st	Y, r24
+
+		/* Append the buffer to free large buffer queue */
+		qmm_queue_append(&free_large_buffer_q, &buf_header[index]);
      a92:	be 01       	movw	r22, r28
      a94:	80 ec       	ldi	r24, 0xC0	; 192
      a96:	92 e0       	ldi	r25, 0x02	; 2
      a98:	ad d0       	rcall	.+346    	; 0xbf4 <qmm_queue_append>
+	for (index = 0; index < TOTAL_NUMBER_OF_LARGE_BUFS; index++) {
+		/*
+		 * Initialize the buffer body pointer with address of the
+		 * buffer body
+		 */
+		buf_header[index].body = buf_pool + (index * LARGE_BUFFER_SIZE);
      a9a:	8c e5       	ldi	r24, 0x5C	; 92
      a9c:	93 e0       	ldi	r25, 0x03	; 3
      a9e:	9d 83       	std	Y+5, r25	; 0x05
      aa0:	8c 83       	std	Y+4, r24	; 0x04
+
+		/* Append the buffer to free large buffer queue */
+		qmm_queue_append(&free_large_buffer_q, &buf_header[index]);
      aa2:	69 ec       	ldi	r22, 0xC9	; 201
      aa4:	72 e0       	ldi	r23, 0x02	; 2
      aa6:	80 ec       	ldi	r24, 0xC0	; 192
      aa8:	92 e0       	ldi	r25, 0x02	; 2
      aaa:	a4 d0       	rcall	.+328    	; 0xbf4 <qmm_queue_append>
+	for (index = 0; index < TOTAL_NUMBER_OF_LARGE_BUFS; index++) {
+		/*
+		 * Initialize the buffer body pointer with address of the
+		 * buffer body
+		 */
+		buf_header[index].body = buf_pool + (index * LARGE_BUFFER_SIZE);
      aac:	87 ee       	ldi	r24, 0xE7	; 231
      aae:	93 e0       	ldi	r25, 0x03	; 3
      ab0:	99 87       	std	Y+9, r25	; 0x09
      ab2:	88 87       	std	Y+8, r24	; 0x08
+
+		/* Append the buffer to free large buffer queue */
+		qmm_queue_append(&free_large_buffer_q, &buf_header[index]);
      ab4:	6d ec       	ldi	r22, 0xCD	; 205
      ab6:	72 e0       	ldi	r23, 0x02	; 2
      ab8:	80 ec       	ldi	r24, 0xC0	; 192
      aba:	92 e0       	ldi	r25, 0x02	; 2
      abc:	9b d0       	rcall	.+310    	; 0xbf4 <qmm_queue_append>
+		/* Append the buffer to free small buffer queue */
+		qmm_queue_append(&free_small_buffer_q, &buf_header[index + \
+				TOTAL_NUMBER_OF_LARGE_BUFS]);
+	}
+#endif
+}
      abe:	df 91       	pop	r29
      ac0:	cf 91       	pop	r28
      ac2:	08 95       	ret
 
 00000ac4 <bmm_buffer_alloc>:
+			}
+		}
+
+#else /* no small buffers available at all */
+	/* Allocate buffer from free large buffer queue */
+	pfree_buffer = qmm_queue_remove(&free_large_buffer_q, NULL);
      ac4:	60 e0       	ldi	r22, 0x00	; 0
      ac6:	70 e0       	ldi	r23, 0x00	; 0
      ac8:	80 ec       	ldi	r24, 0xC0	; 192
      aca:	92 e0       	ldi	r25, 0x02	; 2
      acc:	b8 c0       	rjmp	.+368    	; 0xc3e <qmm_queue_remove>
+
+	size = size; /* Keep compiler happy. */
+#endif
+
+		return pfree_buffer;
+	}
      ace:	08 95       	ret
 
 00000ad0 <bmm_buffer_free>:
+	 *
+	 * @param pbuffer Pointer to buffer that has to be freed.
+	 */
+	void bmm_buffer_free(buffer_t *pbuffer)
+	{
+		if (NULL == pbuffer) {
      ad0:	00 97       	sbiw	r24, 0x00	; 0
      ad2:	21 f0       	breq	.+8      	; 0xadc <bmm_buffer_free+0xc>
      ad4:	bc 01       	movw	r22, r24
+			qmm_queue_append(&free_large_buffer_q, pbuffer);
+		}
+
+#else /* no small buffers available at all */
+		/* Append the buffer into free large buffer queue */
+		qmm_queue_append(&free_large_buffer_q, pbuffer);
      ad6:	80 ec       	ldi	r24, 0xC0	; 192
      ad8:	92 e0       	ldi	r25, 0x02	; 2
      ada:	8c c0       	rjmp	.+280    	; 0xbf4 <qmm_queue_append>
      adc:	08 95       	ret
 
 00000ade <queue_read_or_remove>:
+ * \ingroup group_qmm
+ */
+static buffer_t *queue_read_or_remove(queue_t *q,
+		buffer_mode_t mode,
+		search_t *search)
+{
      ade:	8f 92       	push	r8
      ae0:	9f 92       	push	r9
      ae2:	af 92       	push	r10
@@ -1598,10 +1697,24 @@ void wireless_init(void)
      af6:	1f 92       	push	r1
      af8:	cd b7       	in	r28, 0x3d	; 61
      afa:	de b7       	in	r29, 0x3e	; 62
+
+typedef uint8_t irqflags_t;
+
+static inline irqflags_t cpu_irq_save(void)
+{
+	volatile irqflags_t flags = SREG;
      afc:	2f b7       	in	r18, 0x3f	; 63
      afe:	29 83       	std	Y+1, r18	; 0x01
+	cpu_irq_disable();
      b00:	f8 94       	cli
+	return flags;
      b02:	89 80       	ldd	r8, Y+1	; 0x01
+	buffer_t *buffer_current = NULL;
+	buffer_t *buffer_previous;
+
+	ENTER_CRITICAL_REGION();
+	/* Check whether queue is empty */
+	if (q->size != 0) {
      b04:	dc 01       	movw	r26, r24
      b06:	14 96       	adiw	r26, 0x04	; 4
      b08:	2c 91       	ld	r18, X
@@ -1611,18 +1724,38 @@ void wireless_init(void)
      b10:	7a 01       	movw	r14, r20
      b12:	96 2e       	mov	r9, r22
      b14:	5c 01       	movw	r10, r24
+		buffer_current = q->head;
      b16:	fc 01       	movw	r30, r24
      b18:	00 81       	ld	r16, Z
      b1a:	11 81       	ldd	r17, Z+1	; 0x01
+		buffer_previous = q->head;
+
+		/* First get buffer matching with criteria */
+		if (NULL != search) {
      b1c:	45 2b       	or	r20, r21
      b1e:	e1 f0       	breq	.+56     	; 0xb58 <queue_read_or_remove+0x7a>
+			uint8_t match;
+			/* Search for all buffers in the queue */
+			while (NULL != buffer_current) {
      b20:	01 15       	cp	r16, r1
      b22:	11 05       	cpc	r17, r1
      b24:	09 f4       	brne	.+2      	; 0xb28 <queue_read_or_remove+0x4a>
      b26:	4d c0       	rjmp	.+154    	; 0xbc2 <queue_read_or_remove+0xe4>
      b28:	68 01       	movw	r12, r16
      b2a:	01 c0       	rjmp	.+2      	; 0xb2e <queue_read_or_remove+0x50>
+					/* Break, if search criteria matches */
+					break;
+				}
+
+				buffer_previous = buffer_current;
+				buffer_current = buffer_current->next;
      b2c:	89 01       	movw	r16, r18
+		/* First get buffer matching with criteria */
+		if (NULL != search) {
+			uint8_t match;
+			/* Search for all buffers in the queue */
+			while (NULL != buffer_current) {
+				match = search->criteria_func(
      b2e:	d7 01       	movw	r26, r14
      b30:	12 96       	adiw	r26, 0x02	; 2
      b32:	6d 91       	ld	r22, X+
@@ -1634,22 +1767,55 @@ void wireless_init(void)
      b3e:	8d 91       	ld	r24, X+
      b40:	9c 91       	ld	r25, X
      b42:	19 95       	eicall
+						(void *)buffer_current->body,
+						search->handle);
+
+				if (match) {
      b44:	81 11       	cpse	r24, r1
      b46:	09 c0       	rjmp	.+18     	; 0xb5a <queue_read_or_remove+0x7c>
+					/* Break, if search criteria matches */
+					break;
+				}
+
+				buffer_previous = buffer_current;
+				buffer_current = buffer_current->next;
      b48:	f8 01       	movw	r30, r16
      b4a:	22 81       	ldd	r18, Z+2	; 0x02
      b4c:	33 81       	ldd	r19, Z+3	; 0x03
      b4e:	68 01       	movw	r12, r16
+
+		/* First get buffer matching with criteria */
+		if (NULL != search) {
+			uint8_t match;
+			/* Search for all buffers in the queue */
+			while (NULL != buffer_current) {
      b50:	21 15       	cp	r18, r1
      b52:	31 05       	cpc	r19, r1
      b54:	59 f7       	brne	.-42     	; 0xb2c <queue_read_or_remove+0x4e>
      b56:	35 c0       	rjmp	.+106    	; 0xbc2 <queue_read_or_remove+0xe4>
+
+	ENTER_CRITICAL_REGION();
+	/* Check whether queue is empty */
+	if (q->size != 0) {
+		buffer_current = q->head;
+		buffer_previous = q->head;
      b58:	68 01       	movw	r12, r16
+				buffer_current = buffer_current->next;
+			}
+		}
+
+		/* Buffer matching with search criteria found */
+		if (NULL != buffer_current) {
      b5a:	01 15       	cp	r16, r1
      b5c:	11 05       	cpc	r17, r1
      b5e:	99 f1       	breq	.+102    	; 0xbc6 <queue_read_or_remove+0xe8>
+			/* Remove buffer from the queue */
+			if (REMOVE_MODE == mode) {
      b60:	91 10       	cpse	r9, r1
      b62:	31 c0       	rjmp	.+98     	; 0xbc6 <queue_read_or_remove+0xe8>
+				/* Update head if buffer removed is first node
+				**/
+				if (buffer_current == q->head) {
      b64:	d5 01       	movw	r26, r10
      b66:	8d 91       	ld	r24, X+
      b68:	9c 91       	ld	r25, X
@@ -1657,12 +1823,18 @@ void wireless_init(void)
      b6c:	08 17       	cp	r16, r24
      b6e:	19 07       	cpc	r17, r25
      b70:	31 f4       	brne	.+12     	; 0xb7e <queue_read_or_remove+0xa0>
+					q->head = buffer_current->next;
      b72:	f8 01       	movw	r30, r16
      b74:	82 81       	ldd	r24, Z+2	; 0x02
      b76:	93 81       	ldd	r25, Z+3	; 0x03
      b78:	8d 93       	st	X+, r24
      b7a:	9c 93       	st	X, r25
      b7c:	08 c0       	rjmp	.+16     	; 0xb8e <queue_read_or_remove+0xb0>
+				} else {
+					/* Update the link by removing the
+					 * buffer */
+					buffer_previous->next
+						= buffer_current->next;
      b7e:	d8 01       	movw	r26, r16
      b80:	12 96       	adiw	r26, 0x02	; 2
      b82:	8d 91       	ld	r24, X+
@@ -1671,6 +1843,10 @@ void wireless_init(void)
      b88:	f6 01       	movw	r30, r12
      b8a:	93 83       	std	Z+3, r25	; 0x03
      b8c:	82 83       	std	Z+2, r24	; 0x02
+				}
+
+				/* Update tail if buffer removed is last node */
+				if (buffer_current == q->tail) {
      b8e:	d5 01       	movw	r26, r10
      b90:	12 96       	adiw	r26, 0x02	; 2
      b92:	8d 91       	ld	r24, X+
@@ -1679,27 +1855,53 @@ void wireless_init(void)
      b98:	08 17       	cp	r16, r24
      b9a:	19 07       	cpc	r17, r25
      b9c:	21 f4       	brne	.+8      	; 0xba6 <queue_read_or_remove+0xc8>
+					q->tail = buffer_previous;
      b9e:	13 96       	adiw	r26, 0x03	; 3
      ba0:	dc 92       	st	X, r13
      ba2:	ce 92       	st	-X, r12
      ba4:	12 97       	sbiw	r26, 0x02	; 2
+				}
+
+				/* Update size */
+				q->size--;
      ba6:	f5 01       	movw	r30, r10
      ba8:	84 81       	ldd	r24, Z+4	; 0x04
      baa:	81 50       	subi	r24, 0x01	; 1
      bac:	84 83       	std	Z+4, r24	; 0x04
+
+				if (NULL == q->head) {
      bae:	80 81       	ld	r24, Z
      bb0:	91 81       	ldd	r25, Z+1	; 0x01
      bb2:	89 2b       	or	r24, r25
      bb4:	41 f4       	brne	.+16     	; 0xbc6 <queue_read_or_remove+0xe8>
+					q->tail = NULL;
      bb6:	13 82       	std	Z+3, r1	; 0x03
      bb8:	12 82       	std	Z+2, r1	; 0x02
      bba:	05 c0       	rjmp	.+10     	; 0xbc6 <queue_read_or_remove+0xe8>
+ */
+static buffer_t *queue_read_or_remove(queue_t *q,
+		buffer_mode_t mode,
+		search_t *search)
+{
+	buffer_t *buffer_current = NULL;
      bbc:	00 e0       	ldi	r16, 0x00	; 0
      bbe:	10 e0       	ldi	r17, 0x00	; 0
      bc0:	02 c0       	rjmp	.+4      	; 0xbc6 <queue_read_or_remove+0xe8>
      bc2:	00 e0       	ldi	r16, 0x00	; 0
      bc4:	10 e0       	ldi	r17, 0x00	; 0
+}
+
+static inline void cpu_irq_restore(irqflags_t flags)
+{
+	barrier();
+	SREG = flags;
      bc6:	8f be       	out	0x3f, r8	; 63
+	LEAVE_CRITICAL_REGION();
+
+	/* Return the buffer. note that pointer to header of buffer is returned
+	**/
+	return (buffer_current);
+} /* queue_read_or_remove */
      bc8:	c8 01       	movw	r24, r16
      bca:	0f 90       	pop	r0
      bcc:	df 91       	pop	r29
@@ -1717,65 +1919,144 @@ void wireless_init(void)
      be4:	08 95       	ret
 
 00000be6 <qmm_queue_init>:
+#ifdef ENABLE_QUEUE_CAPACITY
+void qmm_queue_init(queue_t *q, uint8_t capacity)
+#else
+void qmm_queue_init(queue_t *q)
+#endif  /* ENABLE_QUEUE_CAPACITY */
+{
      be6:	fc 01       	movw	r30, r24
+	q->head = NULL;
      be8:	11 82       	std	Z+1, r1	; 0x01
      bea:	10 82       	st	Z, r1
+	q->tail = NULL;
      bec:	13 82       	std	Z+3, r1	; 0x03
      bee:	12 82       	std	Z+2, r1	; 0x02
+	q->size = 0;
      bf0:	14 82       	std	Z+4, r1	; 0x04
      bf2:	08 95       	ret
 
 00000bf4 <qmm_queue_append>:
+#ifdef ENABLE_QUEUE_CAPACITY
+retval_t qmm_queue_append(queue_t *q, buffer_t *buf)
+#else
+void qmm_queue_append(queue_t *q, buffer_t *buf)
+#endif  /* ENABLE_QUEUE_CAPACITY */
+{
      bf4:	cf 93       	push	r28
      bf6:	df 93       	push	r29
      bf8:	1f 92       	push	r1
      bfa:	cd b7       	in	r28, 0x3d	; 61
      bfc:	de b7       	in	r29, 0x3e	; 62
      bfe:	fc 01       	movw	r30, r24
+
+typedef uint8_t irqflags_t;
+
+static inline irqflags_t cpu_irq_save(void)
+{
+	volatile irqflags_t flags = SREG;
      c00:	8f b7       	in	r24, 0x3f	; 63
      c02:	89 83       	std	Y+1, r24	; 0x01
+	cpu_irq_disable();
      c04:	f8 94       	cli
+	return flags;
      c06:	99 81       	ldd	r25, Y+1	; 0x01
+		status = QUEUE_FULL;
+	} else
+#endif  /* ENABLE_QUEUE_CAPACITY */
+	{
+		/* Check whether queue is empty */
+		if (q->size == 0) {
      c08:	84 81       	ldd	r24, Z+4	; 0x04
      c0a:	81 11       	cpse	r24, r1
      c0c:	03 c0       	rjmp	.+6      	; 0xc14 <qmm_queue_append+0x20>
+			/* Add the buffer at the head */
+			q->head = buf;
      c0e:	71 83       	std	Z+1, r23	; 0x01
      c10:	60 83       	st	Z, r22
      c12:	06 c0       	rjmp	.+12     	; 0xc20 <qmm_queue_append+0x2c>
+		} else {
+			/* Add the buffer at the end */
+			q->tail->next = buf;
      c14:	a2 81       	ldd	r26, Z+2	; 0x02
      c16:	b3 81       	ldd	r27, Z+3	; 0x03
      c18:	13 96       	adiw	r26, 0x03	; 3
      c1a:	7c 93       	st	X, r23
      c1c:	6e 93       	st	-X, r22
      c1e:	12 97       	sbiw	r26, 0x02	; 2
+		}
+
+		/* Update the list */
+		q->tail = buf;
      c20:	73 83       	std	Z+3, r23	; 0x03
      c22:	62 83       	std	Z+2, r22	; 0x02
+
+		/* Terminate the list */
+		buf->next = NULL;
      c24:	db 01       	movw	r26, r22
      c26:	13 96       	adiw	r26, 0x03	; 3
      c28:	1c 92       	st	X, r1
      c2a:	1e 92       	st	-X, r1
      c2c:	12 97       	sbiw	r26, 0x02	; 2
+
+		/* Update size */
+		q->size++;
      c2e:	84 81       	ldd	r24, Z+4	; 0x04
      c30:	8f 5f       	subi	r24, 0xFF	; 255
      c32:	84 83       	std	Z+4, r24	; 0x04
+}
+
+static inline void cpu_irq_restore(irqflags_t flags)
+{
+	barrier();
+	SREG = flags;
      c34:	9f bf       	out	0x3f, r25	; 63
+	LEAVE_CRITICAL_REGION();
+
+#ifdef ENABLE_QUEUE_CAPACITY
+	return (status);
+#endif
+} /* qmm_queue_append */
      c36:	0f 90       	pop	r0
      c38:	df 91       	pop	r29
      c3a:	cf 91       	pop	r28
      c3c:	08 95       	ret
 
 00000c3e <qmm_queue_remove>:
+ *
+ * @return Pointer to the buffer header, if the buffer is
+ * successfully removed, NULL otherwise.
+ */
+buffer_t *qmm_queue_remove(queue_t *q, search_t *search)
+{
      c3e:	ab 01       	movw	r20, r22
+	return (queue_read_or_remove(q, REMOVE_MODE, search));
      c40:	60 e0       	ldi	r22, 0x00	; 0
      c42:	4d cf       	rjmp	.-358    	; 0xade <queue_read_or_remove>
+}
      c44:	08 95       	ret
 
 00000c46 <__portable_avr_delay_cycles>:
+ *
+ * @{
+ */
+__always_optimize
+static inline void __portable_avr_delay_cycles(unsigned long n)
+{
      c46:	04 c0       	rjmp	.+8      	; 0xc50 <__portable_avr_delay_cycles+0xa>
+	while (n) {
+		barrier();
+		n--;
      c48:	61 50       	subi	r22, 0x01	; 1
      c4a:	71 09       	sbc	r23, r1
      c4c:	81 09       	sbc	r24, r1
      c4e:	91 09       	sbc	r25, r1
+ * @{
+ */
+__always_optimize
+static inline void __portable_avr_delay_cycles(unsigned long n)
+{
+	while (n) {
      c50:	61 15       	cp	r22, r1
      c52:	71 05       	cpc	r23, r1
      c54:	81 05       	cpc	r24, r1
@@ -1784,37 +2065,82 @@ void wireless_init(void)
      c5a:	08 95       	ret
 
 00000c5c <switch_pll_on>:
+/**
+ * \brief Switches the PLL on
+ * \ingroup group_tal_state_machine_rfr2
+ */
+static void switch_pll_on(void)
+{
      c5c:	0f 93       	push	r16
      c5e:	1f 93       	push	r17
      c60:	cf 93       	push	r28
+	trx_irq_reason_t irq_status;
+	uint8_t poll_counter = 0;
+
+	/* Check if trx is in TRX_OFF; only from PLL_ON the following procedure
+	 * is applicable */
+	if (trx_bit_read(SR_TRX_STATUS) != TRX_OFF) {
      c62:	80 91 41 01 	lds	r24, 0x0141	; 0x800141 <__TEXT_REGION_LENGTH__+0x700141>
      c66:	8f 71       	andi	r24, 0x1F	; 31
      c68:	88 30       	cpi	r24, 0x08	; 8
      c6a:	a1 f4       	brne	.+40     	; 0xc94 <switch_pll_on+0x38>
+				"Switch PLL_ON failed, because trx is not in TRX_OFF" ==
+				0);
+		return;
+	}
+
+	IRQ_STATUS = _BV(PLL_LOCK); /* clear PLL lock bit */
      c6c:	81 e0       	ldi	r24, 0x01	; 1
      c6e:	80 93 4f 01 	sts	0x014F, r24	; 0x80014f <__TEXT_REGION_LENGTH__+0x70014f>
+	/* Switch PLL on */
+	trx_reg_write(RG_TRX_STATE, CMD_PLL_ON);
      c72:	89 e0       	ldi	r24, 0x09	; 9
      c74:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
      c78:	c3 e0       	ldi	r28, 0x03	; 3
+
+	/* Check if PLL has been locked. */
+	do {
+		irq_status = (trx_irq_reason_t)trx_reg_read(RG_IRQ_STATUS);
      c7a:	0f e4       	ldi	r16, 0x4F	; 79
      c7c:	11 e0       	ldi	r17, 0x01	; 1
      c7e:	f8 01       	movw	r30, r16
      c80:	80 81       	ld	r24, Z
+
+		if (irq_status & TRX_IRQ_PLL_LOCK) {
      c82:	80 fd       	sbrc	r24, 0
      c84:	07 c0       	rjmp	.+14     	; 0xc94 <switch_pll_on+0x38>
+			return; /* PLL is locked now */
+		}
+
+		/* Wait a time interval of typical value for timer TR4. */
+		pal_timer_delay(TRX_OFF_TO_PLL_ON_TIME_US);
      c86:	63 e9       	ldi	r22, 0x93	; 147
      c88:	70 e0       	ldi	r23, 0x00	; 0
      c8a:	80 e0       	ldi	r24, 0x00	; 0
      c8c:	90 e0       	ldi	r25, 0x00	; 0
      c8e:	db df       	rcall	.-74     	; 0xc46 <__portable_avr_delay_cycles>
      c90:	c1 50       	subi	r28, 0x01	; 1
+
+		poll_counter++;
+	} while (poll_counter < PLL_LOCK_ATTEMPTS);
      c92:	a9 f7       	brne	.-22     	; 0xc7e <switch_pll_on+0x22>
+
+#if (_DEBUG_ > 0)
+	Assert("PLL switch failed" == 0);
+#endif
+}
      c94:	cf 91       	pop	r28
      c96:	1f 91       	pop	r17
      c98:	0f 91       	pop	r16
      c9a:	08 95       	ret
 
 00000c9c <set_trx_state>:
+ * \param trx_cmd needs to be one of the trx commands
+ *
+ * \return current trx state
+ */
+tal_trx_status_t set_trx_state(trx_cmd_t trx_cmd)
+{
      c9c:	1f 93       	push	r17
      c9e:	cf 93       	push	r28
      ca0:	df 93       	push	r29
@@ -1822,46 +2148,102 @@ void wireless_init(void)
      ca4:	cd b7       	in	r28, 0x3d	; 61
      ca6:	de b7       	in	r29, 0x3e	; 62
      ca8:	18 2f       	mov	r17, r24
+	if (tal_trx_status == TRX_SLEEP) {
      caa:	80 91 6b 05 	lds	r24, 0x056B	; 0x80056b <tal_trx_status>
      cae:	8f 30       	cpi	r24, 0x0F	; 15
      cb0:	51 f5       	brne	.+84     	; 0xd06 <set_trx_state+0x6a>
+		 * Once the TRX is awake, the original state of the global
+		 * interrupts
+		 * will be restored.
+		 */
+		/* Reset wake-up interrupt flag. */
+		if (CMD_SLEEP == trx_cmd) {
      cb2:	1f 30       	cpi	r17, 0x0F	; 15
      cb4:	09 f4       	brne	.+2      	; 0xcb8 <set_trx_state+0x1c>
      cb6:	38 c1       	rjmp	.+624    	; 0xf28 <set_trx_state+0x28c>
+			return TRX_SLEEP;
+		}
+
+		tal_awake_end_flag = false;
      cb8:	10 92 6f 05 	sts	0x056F, r1	; 0x80056f <tal_awake_end_flag>
+		/* Set callback function for the awake interrupt. */
+		pal_trx_irq_init_awake((FUNC_PTR)trx_awake_handler_cb);
      cbc:	83 e8       	ldi	r24, 0x83	; 131
      cbe:	9a e0       	ldi	r25, 0x0A	; 10
      cc0:	e1 d2       	rcall	.+1474   	; 0x1284 <pal_trx_irq_init_awake>
+
+typedef uint8_t irqflags_t;
+
+static inline irqflags_t cpu_irq_save(void)
+{
+	volatile irqflags_t flags = SREG;
      cc2:	8f b7       	in	r24, 0x3f	; 63
      cc4:	89 83       	std	Y+1, r24	; 0x01
+	cpu_irq_disable();
      cc6:	f8 94       	cli
+	return flags;
      cc8:	99 81       	ldd	r25, Y+1	; 0x01
+		/* Save current state of global interrupts. */
+		ENTER_CRITICAL_REGION();
+		/* Force enabling of global interrupts. */
+		ENABLE_GLOBAL_IRQ();
      cca:	78 94       	sei
+		/* Leave trx sleep mode. */
+		TRX_SLP_TR_LOW();
      ccc:	e9 e3       	ldi	r30, 0x39	; 57
      cce:	f1 e0       	ldi	r31, 0x01	; 1
      cd0:	80 81       	ld	r24, Z
      cd2:	8d 7f       	andi	r24, 0xFD	; 253
      cd4:	80 83       	st	Z, r24
+		/* Poll wake-up interrupt flag until set within ISR. */
+		while (!tal_awake_end_flag) {
      cd6:	80 91 6f 05 	lds	r24, 0x056F	; 0x80056f <tal_awake_end_flag>
      cda:	88 23       	and	r24, r24
      cdc:	e1 f3       	breq	.-8      	; 0xcd6 <set_trx_state+0x3a>
+}
+
+static inline void cpu_irq_restore(irqflags_t flags)
+{
+	barrier();
+	SREG = flags;
      cde:	9f bf       	out	0x3f, r25	; 63
+		}
+		/* Restore original state of global interrupts. */
+		LEAVE_CRITICAL_REGION();
+		/* Clear existing interrupts */
+		trx_reg_write(RG_IRQ_STATUS, 0xFF);
      ce0:	8f ef       	ldi	r24, 0xFF	; 255
      ce2:	80 93 4f 01 	sts	0x014F, r24	; 0x80014f <__TEXT_REGION_LENGTH__+0x70014f>
+		/* Re-enable TRX_END interrupt */
+		trx_reg_write(RG_IRQ_MASK, TRX_IRQ_DEFAULT);
      ce6:	88 e4       	ldi	r24, 0x48	; 72
      ce8:	80 93 4e 01 	sts	0x014E, r24	; 0x80014e <__TEXT_REGION_LENGTH__+0x70014e>
+
+#if (ANTENNA_DIVERSITY == 1)
+		/* Enable antenna diversity. */
+		trx_bit_write(SR_ANT_EXT_SW_EN, ANT_EXT_SW_ENABLE);
      cec:	ed e4       	ldi	r30, 0x4D	; 77
      cee:	f1 e0       	ldi	r31, 0x01	; 1
      cf0:	80 81       	ld	r24, Z
      cf2:	84 60       	ori	r24, 0x04	; 4
      cf4:	80 83       	st	Z, r24
+#endif
+
+		if ((trx_cmd == CMD_TRX_OFF) ||
      cf6:	18 30       	cpi	r17, 0x08	; 8
      cf8:	11 f0       	breq	.+4      	; 0xcfe <set_trx_state+0x62>
      cfa:	13 30       	cpi	r17, 0x03	; 3
      cfc:	21 f4       	brne	.+8      	; 0xd06 <set_trx_state+0x6a>
+				(trx_cmd == CMD_FORCE_TRX_OFF)) {
+			tal_trx_status = TRX_OFF;
      cfe:	88 e0       	ldi	r24, 0x08	; 8
      d00:	80 93 6b 05 	sts	0x056B, r24	; 0x80056b <tal_trx_status>
+			return TRX_OFF;
      d04:	11 c1       	rjmp	.+546    	; 0xf28 <set_trx_state+0x28c>
+		}
+	}
+
+	switch (trx_cmd) { /* requested state */
      d06:	81 2f       	mov	r24, r17
      d08:	90 e0       	ldi	r25, 0x00	; 0
      d0a:	fc 01       	movw	r30, r24
@@ -1875,15 +2257,28 @@ void wireless_init(void)
      d1a:	ff 4f       	sbci	r31, 0xFF	; 255
      d1c:	8f 4f       	sbci	r24, 0xFF	; 255
      d1e:	0c 94 9e 13 	jmp	0x273c	; 0x273c <__tablejump2__>
+	case CMD_SLEEP:
+		trx_reg_write(RG_TRX_STATE, CMD_FORCE_TRX_OFF);
      d22:	83 e0       	ldi	r24, 0x03	; 3
      d24:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
+#if (ANTENNA_DIVERSITY == 1)
+		/* Disable antenna diversity: sets pulls */
+		trx_bit_write(SR_ANT_EXT_SW_EN, ANT_EXT_SW_DISABLE);
      d28:	ed e4       	ldi	r30, 0x4D	; 77
      d2a:	f1 e0       	ldi	r31, 0x01	; 1
      d2c:	80 81       	ld	r24, Z
      d2e:	8b 7f       	andi	r24, 0xFB	; 251
      d30:	80 83       	st	Z, r24
+			uint16_t rand_value;
+
+			/*
+			 * Init the SEED value of the CSMA backoff algorithm.
+			 */
+			rand_value = (uint16_t)rand();
      d32:	0e 94 1e 14 	call	0x283c	; 0x283c <rand>
+			trx_reg_write(RG_CSMA_SEED_0, (uint8_t)rand_value);
      d36:	80 93 6d 01 	sts	0x016D, r24	; 0x80016d <__TEXT_REGION_LENGTH__+0x70016d>
+			trx_bit_write(SR_CSMA_SEED_1,
      d3a:	ee e6       	ldi	r30, 0x6E	; 110
      d3c:	f1 e0       	ldi	r31, 0x01	; 1
      d3e:	80 81       	ld	r24, Z
@@ -1891,50 +2286,96 @@ void wireless_init(void)
      d42:	88 7f       	andi	r24, 0xF8	; 248
      d44:	89 2b       	or	r24, r25
      d46:	80 83       	st	Z, r24
+
+		/*
+		 * Clear existing interrupts to have clear interrupt flags
+		 * during wake-up.
+		 */
+		trx_reg_write(RG_IRQ_STATUS, 0xFF);
      d48:	8f ef       	ldi	r24, 0xFF	; 255
      d4a:	80 93 4f 01 	sts	0x014F, r24	; 0x80014f <__TEXT_REGION_LENGTH__+0x70014f>
+
+		/*
+		 * Enable Awake_end interrupt.
+		 * This is used for save wake-up from sleep later.
+		 */
+		trx_reg_write(RG_IRQ_MASK, TRX_IRQ_AWAKE_ONLY);
      d4e:	80 e8       	ldi	r24, 0x80	; 128
      d50:	80 93 4e 01 	sts	0x014E, r24	; 0x80014e <__TEXT_REGION_LENGTH__+0x70014e>
+
+		PAL_WAIT_1_US();
      d54:	62 e0       	ldi	r22, 0x02	; 2
      d56:	70 e0       	ldi	r23, 0x00	; 0
      d58:	80 e0       	ldi	r24, 0x00	; 0
      d5a:	90 e0       	ldi	r25, 0x00	; 0
      d5c:	74 df       	rcall	.-280    	; 0xc46 <__portable_avr_delay_cycles>
+		TRX_SLP_TR_HIGH();
      d5e:	e9 e3       	ldi	r30, 0x39	; 57
      d60:	f1 e0       	ldi	r31, 0x01	; 1
      d62:	80 81       	ld	r24, Z
      d64:	82 60       	ori	r24, 0x02	; 2
      d66:	80 83       	st	Z, r24
+		pal_timer_delay(TRX_OFF_TO_SLEEP_TIME_CLKM_CYCLES);
      d68:	6f e2       	ldi	r22, 0x2F	; 47
      d6a:	70 e0       	ldi	r23, 0x00	; 0
      d6c:	80 e0       	ldi	r24, 0x00	; 0
      d6e:	90 e0       	ldi	r25, 0x00	; 0
      d70:	6a df       	rcall	.-300    	; 0xc46 <__portable_avr_delay_cycles>
+		tal_trx_status = TRX_SLEEP;
      d72:	8f e0       	ldi	r24, 0x0F	; 15
      d74:	80 93 6b 05 	sts	0x056B, r24	; 0x80056b <tal_trx_status>
+		return TRX_SLEEP; /* transceiver register cannot be read during
      d78:	d7 c0       	rjmp	.+430    	; 0xf28 <set_trx_state+0x28c>
+		                   * TRX_SLEEP */
+
+	case CMD_TRX_OFF:
+		switch (tal_trx_status) {
      d7a:	80 91 6b 05 	lds	r24, 0x056B	; 0x80056b <tal_trx_status>
      d7e:	88 30       	cpi	r24, 0x08	; 8
      d80:	21 f1       	breq	.+72     	; 0xdca <set_trx_state+0x12e>
+		case TRX_OFF:
+			break;
+
+		default:
+			trx_reg_write(RG_TRX_STATE, CMD_TRX_OFF);
      d82:	88 e0       	ldi	r24, 0x08	; 8
      d84:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
+			PAL_WAIT_1_US();
      d88:	62 e0       	ldi	r22, 0x02	; 2
      d8a:	70 e0       	ldi	r23, 0x00	; 0
      d8c:	80 e0       	ldi	r24, 0x00	; 0
      d8e:	90 e0       	ldi	r25, 0x00	; 0
      d90:	5a df       	rcall	.-332    	; 0xc46 <__portable_avr_delay_cycles>
+			break;
      d92:	1b c0       	rjmp	.+54     	; 0xdca <set_trx_state+0x12e>
+		}
+		break;
+
+	case CMD_FORCE_TRX_OFF:
+		switch (tal_trx_status) {
      d94:	80 91 6b 05 	lds	r24, 0x056B	; 0x80056b <tal_trx_status>
      d98:	88 30       	cpi	r24, 0x08	; 8
      d9a:	b9 f0       	breq	.+46     	; 0xdca <set_trx_state+0x12e>
+		case TRX_OFF:
+			break;
+
+		default:
+			trx_reg_write(RG_TRX_STATE, CMD_FORCE_TRX_OFF);
      d9c:	83 e0       	ldi	r24, 0x03	; 3
      d9e:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
+			PAL_WAIT_1_US();
      da2:	62 e0       	ldi	r22, 0x02	; 2
      da4:	70 e0       	ldi	r23, 0x00	; 0
      da6:	80 e0       	ldi	r24, 0x00	; 0
      da8:	90 e0       	ldi	r25, 0x00	; 0
      daa:	4d df       	rcall	.-358    	; 0xc46 <__portable_avr_delay_cycles>
+			break;
      dac:	0e c0       	rjmp	.+28     	; 0xdca <set_trx_state+0x12e>
+		}
+		break;
+
+	case CMD_PLL_ON:
+		switch (tal_trx_status) {
      dae:	80 91 6b 05 	lds	r24, 0x056B	; 0x80056b <tal_trx_status>
      db2:	88 30       	cpi	r24, 0x08	; 8
      db4:	49 f0       	breq	.+18     	; 0xdc8 <set_trx_state+0x12c>
@@ -1946,30 +2387,70 @@ void wireless_init(void)
      dc0:	39 f0       	breq	.+14     	; 0xdd0 <set_trx_state+0x134>
      dc2:	89 31       	cpi	r24, 0x19	; 25
      dc4:	11 f4       	brne	.+4      	; 0xdca <set_trx_state+0x12e>
+		case PLL_ON:
+			break;
+
+		case TRX_OFF:
+			switch_pll_on();
      dc6:	04 c0       	rjmp	.+8      	; 0xdd0 <set_trx_state+0x134>
      dc8:	49 df       	rcall	.-366    	; 0xc5c <switch_pll_on>
+		Assert("trx command not handled" == 0);
+		break;
+	}
+
+	do {
+		tal_trx_status = (tal_trx_status_t)trx_bit_read(
      dca:	e1 e4       	ldi	r30, 0x41	; 65
      dcc:	f1 e0       	ldi	r31, 0x01	; 1
      dce:	a6 c0       	rjmp	.+332    	; 0xf1c <set_trx_state+0x280>
+			break;
+
+		case RX_ON:
+		case RX_AACK_ON:
+		case TX_ARET_ON:
+			trx_reg_write(RG_TRX_STATE, CMD_PLL_ON);
      dd0:	89 e0       	ldi	r24, 0x09	; 9
      dd2:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
+			PAL_WAIT_1_US();
      dd6:	62 e0       	ldi	r22, 0x02	; 2
      dd8:	70 e0       	ldi	r23, 0x00	; 0
      dda:	80 e0       	ldi	r24, 0x00	; 0
      ddc:	90 e0       	ldi	r25, 0x00	; 0
      dde:	33 df       	rcall	.-410    	; 0xc46 <__portable_avr_delay_cycles>
+			break;
      de0:	f4 cf       	rjmp	.-24     	; 0xdca <set_trx_state+0x12e>
+			break;
+		}
+		break;
+
+	case CMD_FORCE_PLL_ON:
+		switch (tal_trx_status) {
      de2:	80 91 6b 05 	lds	r24, 0x056B	; 0x80056b <tal_trx_status>
      de6:	88 30       	cpi	r24, 0x08	; 8
      de8:	19 f0       	breq	.+6      	; 0xdf0 <set_trx_state+0x154>
      dea:	89 30       	cpi	r24, 0x09	; 9
      dec:	71 f3       	breq	.-36     	; 0xdca <set_trx_state+0x12e>
+		case TRX_OFF:
+			switch_pll_on();
      dee:	02 c0       	rjmp	.+4      	; 0xdf4 <set_trx_state+0x158>
      df0:	35 df       	rcall	.-406    	; 0xc5c <switch_pll_on>
+			break;
      df2:	eb cf       	rjmp	.-42     	; 0xdca <set_trx_state+0x12e>
+
+		case PLL_ON:
+			break;
+
+		default:
+			trx_reg_write(RG_TRX_STATE, CMD_FORCE_PLL_ON);
      df4:	84 e0       	ldi	r24, 0x04	; 4
      df6:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
+			break;
      dfa:	e7 cf       	rjmp	.-50     	; 0xdca <set_trx_state+0x12e>
+		}
+		break;
+
+	case CMD_RX_ON:
+		switch (tal_trx_status) {
      dfc:	80 91 6b 05 	lds	r24, 0x056B	; 0x80056b <tal_trx_status>
      e00:	89 30       	cpi	r24, 0x09	; 9
      e02:	41 f0       	breq	.+16     	; 0xe14 <set_trx_state+0x178>
@@ -1980,24 +2461,44 @@ void wireless_init(void)
      e0c:	86 31       	cpi	r24, 0x16	; 22
      e0e:	11 f0       	breq	.+4      	; 0xe14 <set_trx_state+0x178>
      e10:	89 31       	cpi	r24, 0x19	; 25
+			break;
+
+		case PLL_ON:
+		case RX_AACK_ON:
+		case TX_ARET_ON:
+			trx_reg_write(RG_TRX_STATE, CMD_RX_ON);
      e12:	d9 f6       	brne	.-74     	; 0xdca <set_trx_state+0x12e>
      e14:	86 e0       	ldi	r24, 0x06	; 6
+			PAL_WAIT_1_US();
      e16:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
      e1a:	62 e0       	ldi	r22, 0x02	; 2
      e1c:	70 e0       	ldi	r23, 0x00	; 0
      e1e:	80 e0       	ldi	r24, 0x00	; 0
      e20:	90 e0       	ldi	r25, 0x00	; 0
+			break;
+
+		case TRX_OFF:
+			switch_pll_on();
      e22:	11 df       	rcall	.-478    	; 0xc46 <__portable_avr_delay_cycles>
      e24:	d2 cf       	rjmp	.-92     	; 0xdca <set_trx_state+0x12e>
+			trx_reg_write(RG_TRX_STATE, CMD_RX_ON);
      e26:	1a df       	rcall	.-460    	; 0xc5c <switch_pll_on>
      e28:	86 e0       	ldi	r24, 0x06	; 6
      e2a:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
+			PAL_WAIT_1_US();
      e2e:	62 e0       	ldi	r22, 0x02	; 2
      e30:	70 e0       	ldi	r23, 0x00	; 0
      e32:	80 e0       	ldi	r24, 0x00	; 0
      e34:	90 e0       	ldi	r25, 0x00	; 0
      e36:	07 df       	rcall	.-498    	; 0xc46 <__portable_avr_delay_cycles>
+			break;
      e38:	c8 cf       	rjmp	.-112    	; 0xdca <set_trx_state+0x12e>
+			break;
+		}
+		break;
+
+	case CMD_RX_AACK_ON:
+		switch (tal_trx_status) {
      e3a:	80 91 6b 05 	lds	r24, 0x056B	; 0x80056b <tal_trx_status>
      e3e:	88 30       	cpi	r24, 0x08	; 8
      e40:	91 f0       	breq	.+36     	; 0xe66 <set_trx_state+0x1ca>
@@ -2008,46 +2509,82 @@ void wireless_init(void)
      e4a:	89 30       	cpi	r24, 0x09	; 9
      e4c:	19 f0       	breq	.+6      	; 0xe54 <set_trx_state+0x1b8>
      e4e:	89 31       	cpi	r24, 0x19	; 25
+		case RX_AACK_ON:
+			break;
+
+		case TX_ARET_ON:
+		case PLL_ON:
+			trx_reg_write(RG_TRX_STATE, CMD_RX_AACK_ON);
      e50:	09 f0       	breq	.+2      	; 0xe54 <set_trx_state+0x1b8>
      e52:	bb cf       	rjmp	.-138    	; 0xdca <set_trx_state+0x12e>
      e54:	86 e1       	ldi	r24, 0x16	; 22
+			PAL_WAIT_1_US();
      e56:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
      e5a:	62 e0       	ldi	r22, 0x02	; 2
      e5c:	70 e0       	ldi	r23, 0x00	; 0
      e5e:	80 e0       	ldi	r24, 0x00	; 0
+			break;
      e60:	90 e0       	ldi	r25, 0x00	; 0
+
+		case TRX_OFF:
+			switch_pll_on(); /* state change from TRX_OFF to
      e62:	f1 de       	rcall	.-542    	; 0xc46 <__portable_avr_delay_cycles>
      e64:	b2 cf       	rjmp	.-156    	; 0xdca <set_trx_state+0x12e>
+			                  * RX_AACK_ON can be done directly, too
+			                  **/
+			trx_reg_write(RG_TRX_STATE, CMD_RX_AACK_ON);
      e66:	fa de       	rcall	.-524    	; 0xc5c <switch_pll_on>
      e68:	86 e1       	ldi	r24, 0x16	; 22
      e6a:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
+			PAL_WAIT_1_US();
      e6e:	62 e0       	ldi	r22, 0x02	; 2
      e70:	70 e0       	ldi	r23, 0x00	; 0
      e72:	80 e0       	ldi	r24, 0x00	; 0
      e74:	90 e0       	ldi	r25, 0x00	; 0
+			break;
      e76:	e7 de       	rcall	.-562    	; 0xc46 <__portable_avr_delay_cycles>
+
+		case RX_ON:
+			trx_reg_write(RG_TRX_STATE, CMD_PLL_ON);
      e78:	a8 cf       	rjmp	.-176    	; 0xdca <set_trx_state+0x12e>
      e7a:	89 e0       	ldi	r24, 0x09	; 9
      e7c:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
+			PAL_WAIT_1_US();
      e80:	62 e0       	ldi	r22, 0x02	; 2
      e82:	70 e0       	ldi	r23, 0x00	; 0
      e84:	80 e0       	ldi	r24, 0x00	; 0
      e86:	90 e0       	ldi	r25, 0x00	; 0
      e88:	de de       	rcall	.-580    	; 0xc46 <__portable_avr_delay_cycles>
+			/* check if state change could be applied */
+			tal_trx_status = (tal_trx_status_t)trx_bit_read(
      e8a:	80 91 41 01 	lds	r24, 0x0141	; 0x800141 <__TEXT_REGION_LENGTH__+0x700141>
      e8e:	8f 71       	andi	r24, 0x1F	; 31
      e90:	80 93 6b 05 	sts	0x056B, r24	; 0x80056b <tal_trx_status>
+					SR_TRX_STATUS);
+			if (tal_trx_status != PLL_ON) {
      e94:	89 30       	cpi	r24, 0x09	; 9
      e96:	09 f0       	breq	.+2      	; 0xe9a <set_trx_state+0x1fe>
+				return tal_trx_status;
+			}
+
+			trx_reg_write(RG_TRX_STATE, CMD_RX_AACK_ON);
      e98:	47 c0       	rjmp	.+142    	; 0xf28 <set_trx_state+0x28c>
      e9a:	86 e1       	ldi	r24, 0x16	; 22
      e9c:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
+			PAL_WAIT_1_US();
      ea0:	62 e0       	ldi	r22, 0x02	; 2
      ea2:	70 e0       	ldi	r23, 0x00	; 0
      ea4:	80 e0       	ldi	r24, 0x00	; 0
      ea6:	90 e0       	ldi	r25, 0x00	; 0
      ea8:	ce de       	rcall	.-612    	; 0xc46 <__portable_avr_delay_cycles>
+			break;
      eaa:	8f cf       	rjmp	.-226    	; 0xdca <set_trx_state+0x12e>
+			break;
+		}
+		break;
+
+	case CMD_TX_ARET_ON:
+		switch (tal_trx_status) {
      eac:	80 91 6b 05 	lds	r24, 0x056B	; 0x80056b <tal_trx_status>
      eb0:	88 30       	cpi	r24, 0x08	; 8
      eb2:	51 f1       	breq	.+84     	; 0xf08 <set_trx_state+0x26c>
@@ -2059,49 +2596,90 @@ void wireless_init(void)
      ebe:	19 f0       	breq	.+6      	; 0xec6 <set_trx_state+0x22a>
      ec0:	86 31       	cpi	r24, 0x16	; 22
      ec2:	51 f0       	breq	.+20     	; 0xed8 <set_trx_state+0x23c>
+		case TX_ARET_ON:
+			break;
+
+		case PLL_ON:
+			trx_reg_write(RG_TRX_STATE, CMD_TX_ARET_ON);
      ec4:	82 cf       	rjmp	.-252    	; 0xdca <set_trx_state+0x12e>
      ec6:	89 e1       	ldi	r24, 0x19	; 25
+			PAL_WAIT_1_US();
      ec8:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
      ecc:	62 e0       	ldi	r22, 0x02	; 2
      ece:	70 e0       	ldi	r23, 0x00	; 0
      ed0:	80 e0       	ldi	r24, 0x00	; 0
      ed2:	90 e0       	ldi	r25, 0x00	; 0
+			break;
      ed4:	b8 de       	rcall	.-656    	; 0xc46 <__portable_avr_delay_cycles>
+
+		case RX_ON:
+		case RX_AACK_ON:
+			trx_reg_write(RG_TRX_STATE, CMD_PLL_ON);
      ed6:	79 cf       	rjmp	.-270    	; 0xdca <set_trx_state+0x12e>
      ed8:	89 e0       	ldi	r24, 0x09	; 9
      eda:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
+			PAL_WAIT_1_US();
      ede:	62 e0       	ldi	r22, 0x02	; 2
      ee0:	70 e0       	ldi	r23, 0x00	; 0
      ee2:	80 e0       	ldi	r24, 0x00	; 0
+			/* check if state change could be applied */
+			tal_trx_status = (tal_trx_status_t)trx_bit_read(
      ee4:	90 e0       	ldi	r25, 0x00	; 0
      ee6:	af de       	rcall	.-674    	; 0xc46 <__portable_avr_delay_cycles>
      ee8:	80 91 41 01 	lds	r24, 0x0141	; 0x800141 <__TEXT_REGION_LENGTH__+0x700141>
      eec:	8f 71       	andi	r24, 0x1F	; 31
+					SR_TRX_STATUS);
+			if (tal_trx_status != PLL_ON) {
      eee:	80 93 6b 05 	sts	0x056B, r24	; 0x80056b <tal_trx_status>
+				return tal_trx_status;
+			}
+
+			trx_reg_write(RG_TRX_STATE, CMD_TX_ARET_ON);
      ef2:	89 30       	cpi	r24, 0x09	; 9
      ef4:	c9 f4       	brne	.+50     	; 0xf28 <set_trx_state+0x28c>
+			PAL_WAIT_1_US();
      ef6:	89 e1       	ldi	r24, 0x19	; 25
      ef8:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
      efc:	62 e0       	ldi	r22, 0x02	; 2
      efe:	70 e0       	ldi	r23, 0x00	; 0
      f00:	80 e0       	ldi	r24, 0x00	; 0
+			break;
      f02:	90 e0       	ldi	r25, 0x00	; 0
+
+		case TRX_OFF:
+			switch_pll_on(); /* state change from TRX_OFF to
      f04:	a0 de       	rcall	.-704    	; 0xc46 <__portable_avr_delay_cycles>
      f06:	61 cf       	rjmp	.-318    	; 0xdca <set_trx_state+0x12e>
+			                  * TX_ARET_ON can be done directly, too
+			                  **/
+			trx_reg_write(RG_TRX_STATE, CMD_TX_ARET_ON);
      f08:	a9 de       	rcall	.-686    	; 0xc5c <switch_pll_on>
      f0a:	89 e1       	ldi	r24, 0x19	; 25
      f0c:	80 93 42 01 	sts	0x0142, r24	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
+			PAL_WAIT_1_US();
      f10:	62 e0       	ldi	r22, 0x02	; 2
      f12:	70 e0       	ldi	r23, 0x00	; 0
      f14:	80 e0       	ldi	r24, 0x00	; 0
      f16:	90 e0       	ldi	r25, 0x00	; 0
      f18:	96 de       	rcall	.-724    	; 0xc46 <__portable_avr_delay_cycles>
+			break;
      f1a:	57 cf       	rjmp	.-338    	; 0xdca <set_trx_state+0x12e>
+		Assert("trx command not handled" == 0);
+		break;
+	}
+
+	do {
+		tal_trx_status = (tal_trx_status_t)trx_bit_read(
      f1c:	80 81       	ld	r24, Z
      f1e:	8f 71       	andi	r24, 0x1F	; 31
      f20:	80 93 6b 05 	sts	0x056B, r24	; 0x80056b <tal_trx_status>
+				SR_TRX_STATUS);
+	} while (tal_trx_status == STATE_TRANSITION_IN_PROGRESS);
      f24:	8f 31       	cpi	r24, 0x1F	; 31
      f26:	d1 f3       	breq	.-12     	; 0xf1c <set_trx_state+0x280>
+
+	return tal_trx_status;
+} /* set_trx_state() */
      f28:	0f 90       	pop	r0
      f2a:	df 91       	pop	r29
      f2c:	cf 91       	pop	r28
@@ -2109,65 +2687,151 @@ void wireless_init(void)
      f30:	08 95       	ret
 
 00000f32 <tal_task>:
+ * - Checks and allocates the receive buffer.
+ * - Processes the TAL incoming frame queue.
+ * - Implements the TAL state machine.
+ */
+void tal_task(void)
+{
      f32:	cf 93       	push	r28
      f34:	df 93       	push	r29
+	/* Check if the receiver needs to be switched on. */
+	if (tal_rx_on_required && (tal_state == TAL_IDLE)) {
      f36:	80 91 44 05 	lds	r24, 0x0544	; 0x800544 <tal_rx_on_required>
      f3a:	88 23       	and	r24, r24
      f3c:	19 f1       	breq	.+70     	; 0xf84 <tal_task+0x52>
      f3e:	80 91 70 05 	lds	r24, 0x0570	; 0x800570 <tal_state>
      f42:	81 11       	cpse	r24, r1
      f44:	1f c0       	rjmp	.+62     	; 0xf84 <tal_task+0x52>
+		/* Check if a receive buffer has not been available before. */
+		if (tal_rx_buffer == NULL) {
      f46:	80 91 72 04 	lds	r24, 0x0472	; 0x800472 <tal_rx_buffer>
      f4a:	90 91 73 04 	lds	r25, 0x0473	; 0x800473 <tal_rx_buffer+0x1>
      f4e:	89 2b       	or	r24, r25
      f50:	41 f4       	brne	.+16     	; 0xf62 <tal_task+0x30>
+			tal_rx_buffer = bmm_buffer_alloc(LARGE_BUFFER_SIZE);
      f52:	8b e8       	ldi	r24, 0x8B	; 139
      f54:	b7 dd       	rcall	.-1170   	; 0xac4 <bmm_buffer_alloc>
      f56:	90 93 73 04 	sts	0x0473, r25	; 0x800473 <tal_rx_buffer+0x1>
      f5a:	80 93 72 04 	sts	0x0472, r24	; 0x800472 <tal_rx_buffer>
+		}
+
+		/* Check if buffer could be allocated */
+		if (NULL != tal_rx_buffer) {
      f5e:	89 2b       	or	r24, r25
      f60:	89 f0       	breq	.+34     	; 0xf84 <tal_task+0x52>
+			/*
+			 * Note:
+			 * This flag needs to be reset BEFORE the received is
+			 * switched on.
+			 */
+			tal_rx_on_required = false;
      f62:	10 92 44 05 	sts	0x0544, r1	; 0x800544 <tal_rx_on_required>
+			/*
+			 * Release the protected buffer and set it again for
+			 * further protection
+			 * since the buffer is available now.
+			 */
+			trx_bit_write(SR_RX_SAFE_MODE,
      f66:	cc e4       	ldi	r28, 0x4C	; 76
      f68:	d1 e0       	ldi	r29, 0x01	; 1
      f6a:	88 81       	ld	r24, Y
      f6c:	8f 77       	andi	r24, 0x7F	; 127
      f6e:	88 83       	st	Y, r24
+			                                                *
+			                                                *
+			                                                *protection
+			                                                * mode
+			                                                **/
+			pal_timer_delay(2); /* Allow pin change to get effective
      f70:	63 e0       	ldi	r22, 0x03	; 3
      f72:	70 e0       	ldi	r23, 0x00	; 0
      f74:	80 e0       	ldi	r24, 0x00	; 0
      f76:	90 e0       	ldi	r25, 0x00	; 0
      f78:	66 de       	rcall	.-820    	; 0xc46 <__portable_avr_delay_cycles>
+			                    **/
+			trx_bit_write(SR_RX_SAFE_MODE, RX_SAFE_MODE_ENABLE); /*
      f7a:	88 81       	ld	r24, Y
      f7c:	80 68       	ori	r24, 0x80	; 128
+			} else {
+				set_trx_state(CMD_RX_AACK_ON);
+			}
+
+#else   /* Normal operation */
+			set_trx_state(CMD_RX_AACK_ON);
      f7e:	88 83       	st	Y, r24
      f80:	86 e1       	ldi	r24, 0x16	; 22
      f82:	8c de       	rcall	.-744    	; 0xc9c <set_trx_state>
+
+	/*
+	 * If the transceiver has received a frame and it has been placed
+	 * into the queue of the TAL, the frame needs to be processed further.
+	 */
+	if (tal_incoming_frame_queue.size > 0) {
      f84:	80 91 49 05 	lds	r24, 0x0549	; 0x800549 <tal_incoming_frame_queue+0x4>
      f88:	88 23       	and	r24, r24
      f8a:	41 f0       	breq	.+16     	; 0xf9c <tal_task+0x6a>
+		buffer_t *rx_frame;
+
+		/* Check if there are any pending data in the
+		 * incoming_frame_queue. */
+		rx_frame = qmm_queue_remove(&tal_incoming_frame_queue, NULL);
      f8c:	60 e0       	ldi	r22, 0x00	; 0
      f8e:	70 e0       	ldi	r23, 0x00	; 0
      f90:	85 e4       	ldi	r24, 0x45	; 69
      f92:	95 e0       	ldi	r25, 0x05	; 5
+		if (NULL != rx_frame) {
      f94:	54 de       	rcall	.-856    	; 0xc3e <qmm_queue_remove>
      f96:	00 97       	sbiw	r24, 0x00	; 0
+			process_incoming_frame(rx_frame);
      f98:	09 f0       	breq	.+2      	; 0xf9c <tal_task+0x6a>
+		}
+	}
+
+	/* Handle the TAL state machines */
+	switch (tal_state) {
      f9a:	24 d5       	rcall	.+2632   	; 0x19e4 <process_incoming_frame>
      f9c:	80 91 70 05 	lds	r24, 0x0570	; 0x800570 <tal_state>
      fa0:	82 30       	cpi	r24, 0x02	; 2
+		/* Wait until state is changed to TAL_TX_DONE inside tx end ISR
+		**/
+		break;
+
+	case TAL_TX_DONE:
+		tx_done_handling(); /* see tal_tx.c */
      fa2:	09 f4       	brne	.+2      	; 0xfa6 <tal_task+0x74>
      fa4:	85 d5       	rcall	.+2826   	; 0x1ab0 <tx_done_handling>
+#endif /* (MAC_SCAN_ED_REQUEST_CONFIRM == 1) */
+	default:
+		Assert("tal_state is not handled" == 0);
+		break;
+	}
+} /* tal_task() */
      fa6:	df 91       	pop	r29
      fa8:	cf 91       	pop	r28
      faa:	08 95       	ret
 
 00000fac <__portable_avr_delay_cycles>:
+ *
+ * @{
+ */
+__always_optimize
+static inline void __portable_avr_delay_cycles(unsigned long n)
+{
      fac:	04 c0       	rjmp	.+8      	; 0xfb6 <__portable_avr_delay_cycles+0xa>
+	while (n) {
+		barrier();
+		n--;
      fae:	61 50       	subi	r22, 0x01	; 1
      fb0:	71 09       	sbc	r23, r1
      fb2:	81 09       	sbc	r24, r1
      fb4:	91 09       	sbc	r25, r1
+ * @{
+ */
+__always_optimize
+static inline void __portable_avr_delay_cycles(unsigned long n)
+{
+	while (n) {
      fb6:	61 15       	cp	r22, r1
      fb8:	71 05       	cpc	r23, r1
      fba:	81 05       	cpc	r24, r1
@@ -2176,34 +2840,70 @@ void wireless_init(void)
      fc0:	08 95       	ret
 
 00000fc2 <tal_generate_rand_seed>:
+ * value and restoring this state after finishing the sequence.
+ * Since in our case the function is called from TRX_OFF, this is not required
+ * here.
+ */
+void tal_generate_rand_seed(void)
+{
      fc2:	ff 92       	push	r15
      fc4:	0f 93       	push	r16
      fc6:	1f 93       	push	r17
      fc8:	cf 93       	push	r28
      fca:	df 93       	push	r29
+	uint8_t cur_random_val = 0;
+
+	/* Ensure that PLL has locked and receive mode is reached. */
+	tal_trx_status_t trx_state;
+	do {
+		trx_state = set_trx_state(CMD_RX_ON);
      fcc:	86 e0       	ldi	r24, 0x06	; 6
      fce:	66 de       	rcall	.-820    	; 0xc9c <set_trx_state>
+	} while (trx_state != RX_ON);
      fd0:	86 30       	cpi	r24, 0x06	; 6
      fd2:	e1 f7       	brne	.-8      	; 0xfcc <tal_generate_rand_seed+0xa>
+
+	/* Ensure that register bit RX_PDT_DIS is set to 0. */
+	trx_bit_write(SR_RX_PDT_DIS, RX_ENABLE);
      fd4:	e5 e5       	ldi	r30, 0x55	; 85
      fd6:	f1 e0       	ldi	r31, 0x01	; 1
      fd8:	80 81       	ld	r24, Z
      fda:	8f 77       	andi	r24, 0x7F	; 127
      fdc:	80 83       	st	Z, r24
+
+	/*
+	 * We need to disable TRX IRQs while generating random values in RX_ON,
+	 * we do not want to receive frames at this point of time at all.
+	 */
+	trx_reg_write(RG_IRQ_MASK, TRX_IRQ_NONE);
      fde:	10 92 4e 01 	sts	0x014E, r1	; 0x80014e <__TEXT_REGION_LENGTH__+0x70014e>
      fe2:	68 94       	set
      fe4:	ff 24       	eor	r15, r15
      fe6:	f3 f8       	bld	r15, 3
+ * Since in our case the function is called from TRX_OFF, this is not required
+ * here.
+ */
+void tal_generate_rand_seed(void)
+{
+	uint16_t seed = 0;
      fe8:	c0 e0       	ldi	r28, 0x00	; 0
      fea:	d0 e0       	ldi	r29, 0x00	; 0
+	 * The 16-bit random value is generated from various 2-bit random
+	 * values.
+	 */
+	for (uint8_t i = 0; i < 8; i++) {
+		/* Now we can safely read the 2-bit random number. */
+		cur_random_val = trx_bit_read(SR_RND_VALUE);
      fec:	06 e4       	ldi	r16, 0x46	; 70
      fee:	11 e0       	ldi	r17, 0x01	; 1
      ff0:	f8 01       	movw	r30, r16
      ff2:	90 81       	ld	r25, Z
+		seed = seed << 2;
      ff4:	cc 0f       	add	r28, r28
      ff6:	dd 1f       	adc	r29, r29
      ff8:	cc 0f       	add	r28, r28
      ffa:	dd 1f       	adc	r29, r29
+		seed |= cur_random_val;
      ffc:	90 76       	andi	r25, 0x60	; 96
      ffe:	29 2f       	mov	r18, r25
     1000:	30 e0       	ldi	r19, 0x00	; 0
@@ -2217,22 +2917,46 @@ void wireless_init(void)
     1010:	23 27       	eor	r18, r19
     1012:	c2 2b       	or	r28, r18
     1014:	d3 2b       	or	r29, r19
+		PAL_WAIT_1_US(); /* wait that the random value gets updated */
     1016:	62 e0       	ldi	r22, 0x02	; 2
     1018:	70 e0       	ldi	r23, 0x00	; 0
     101a:	80 e0       	ldi	r24, 0x00	; 0
     101c:	90 e0       	ldi	r25, 0x00	; 0
     101e:	c6 df       	rcall	.-116    	; 0xfac <__portable_avr_delay_cycles>
     1020:	fa 94       	dec	r15
+
+	/*
+	 * The 16-bit random value is generated from various 2-bit random
+	 * values.
+	 */
+	for (uint8_t i = 0; i < 8; i++) {
     1022:	f1 10       	cpse	r15, r1
+		seed = seed << 2;
+		seed |= cur_random_val;
+		PAL_WAIT_1_US(); /* wait that the random value gets updated */
+	}
+
+	set_trx_state(CMD_FORCE_TRX_OFF);
     1024:	e5 cf       	rjmp	.-54     	; 0xff0 <tal_generate_rand_seed+0x2e>
     1026:	83 e0       	ldi	r24, 0x03	; 3
     1028:	39 de       	rcall	.-910    	; 0xc9c <set_trx_state>
+
+	/*
+	 * Now we need to clear potential pending TRX IRQs and
+	 * enable the TRX IRQs again.
+	 */
+	trx_reg_write(RG_IRQ_STATUS, 0xFF);
     102a:	8f ef       	ldi	r24, 0xFF	; 255
     102c:	80 93 4f 01 	sts	0x014F, r24	; 0x80014f <__TEXT_REGION_LENGTH__+0x70014f>
+	trx_reg_write(RG_IRQ_MASK, TRX_IRQ_DEFAULT);
     1030:	88 e4       	ldi	r24, 0x48	; 72
     1032:	80 93 4e 01 	sts	0x014E, r24	; 0x80014e <__TEXT_REGION_LENGTH__+0x70014e>
+
+	/* Set the seed for the random number generator. */
+	srand(seed);
     1036:	ce 01       	movw	r24, r28
     1038:	0e 94 21 14 	call	0x2842	; 0x2842 <srand>
+}
     103c:	df 91       	pop	r29
     103e:	cf 91       	pop	r28
     1040:	1f 91       	pop	r17
@@ -2241,60 +2965,118 @@ void wireless_init(void)
     1046:	08 95       	ret
 
 00001048 <internal_tal_reset>:
+ * \return MAC_SUCCESS  if the transceiver state is changed to TRX_OFF and the
+ *                 current device part number and version number are correct;
+ *         FAILURE otherwise
+ */
+static retval_t internal_tal_reset(bool set_default_pib)
+{
     1048:	ff 92       	push	r15
     104a:	0f 93       	push	r16
     104c:	1f 93       	push	r17
     104e:	cf 93       	push	r28
     1050:	df 93       	push	r29
     1052:	f8 2e       	mov	r15, r24
+{
+	tal_trx_status_t trx_status;
+	uint8_t poll_counter = 0;
+
+	/* trx might sleep, so wake it up */
+	TRX_SLP_TR_LOW();
     1054:	c9 e3       	ldi	r28, 0x39	; 57
     1056:	d1 e0       	ldi	r29, 0x01	; 1
     1058:	88 81       	ld	r24, Y
     105a:	8d 7f       	andi	r24, 0xFD	; 253
     105c:	88 83       	st	Y, r24
+	pal_timer_delay(SLEEP_TO_TRX_OFF_TYP_US);
     105e:	61 e4       	ldi	r22, 0x41	; 65
     1060:	71 e0       	ldi	r23, 0x01	; 1
     1062:	80 e0       	ldi	r24, 0x00	; 0
     1064:	90 e0       	ldi	r25, 0x00	; 0
     1066:	a2 df       	rcall	.-188    	; 0xfac <__portable_avr_delay_cycles>
+
+	/* Apply reset pulse */
+	TRX_RST_LOW();
     1068:	88 81       	ld	r24, Y
     106a:	8e 7f       	andi	r24, 0xFE	; 254
     106c:	88 83       	st	Y, r24
+	pal_timer_delay(RST_PULSE_WIDTH_US);
     106e:	62 e0       	ldi	r22, 0x02	; 2
     1070:	70 e0       	ldi	r23, 0x00	; 0
     1072:	80 e0       	ldi	r24, 0x00	; 0
     1074:	90 e0       	ldi	r25, 0x00	; 0
     1076:	9a df       	rcall	.-204    	; 0xfac <__portable_avr_delay_cycles>
+	TRX_RST_HIGH();
     1078:	88 81       	ld	r24, Y
     107a:	81 60       	ori	r24, 0x01	; 1
     107c:	88 83       	st	Y, r24
+
+	/* verify that trx has reached TRX_OFF */
+	do {
+		/* Wait a short time interval. */
+		pal_timer_delay(TRX_POLL_WAIT_TIME_US);
     107e:	66 e8       	ldi	r22, 0x86	; 134
     1080:	70 e0       	ldi	r23, 0x00	; 0
     1082:	80 e0       	ldi	r24, 0x00	; 0
     1084:	90 e0       	ldi	r25, 0x00	; 0
     1086:	92 df       	rcall	.-220    	; 0xfac <__portable_avr_delay_cycles>
+
+		trx_status = (tal_trx_status_t)trx_bit_read(SR_TRX_STATUS);
     1088:	80 91 41 01 	lds	r24, 0x0141	; 0x800141 <__TEXT_REGION_LENGTH__+0x700141>
     108c:	8f 71       	andi	r24, 0x1F	; 31
     108e:	ca e0       	ldi	r28, 0x0A	; 10
     1090:	01 e4       	ldi	r16, 0x41	; 65
     1092:	11 e0       	ldi	r17, 0x01	; 1
     1094:	0a c0       	rjmp	.+20     	; 0x10aa <internal_tal_reset+0x62>
+	TRX_RST_HIGH();
+
+	/* verify that trx has reached TRX_OFF */
+	do {
+		/* Wait a short time interval. */
+		pal_timer_delay(TRX_POLL_WAIT_TIME_US);
     1096:	66 e8       	ldi	r22, 0x86	; 134
     1098:	70 e0       	ldi	r23, 0x00	; 0
     109a:	80 e0       	ldi	r24, 0x00	; 0
     109c:	90 e0       	ldi	r25, 0x00	; 0
     109e:	86 df       	rcall	.-244    	; 0xfac <__portable_avr_delay_cycles>
+
+		trx_status = (tal_trx_status_t)trx_bit_read(SR_TRX_STATUS);
     10a0:	f8 01       	movw	r30, r16
     10a2:	80 81       	ld	r24, Z
     10a4:	8f 71       	andi	r24, 0x1F	; 31
     10a6:	c1 50       	subi	r28, 0x01	; 1
+
+		/* Wait not more than max. value of TR2. */
+		if (poll_counter == SLEEP_TO_TRX_OFF_ATTEMPTS) {
     10a8:	c9 f1       	breq	.+114    	; 0x111c <internal_tal_reset+0xd4>
+#endif
+			return FAILURE;
+		}
+
+		poll_counter++;
+	} while (trx_status != TRX_OFF);
     10aa:	88 30       	cpi	r24, 0x08	; 8
+
+	tal_trx_status = TRX_OFF;
     10ac:	a1 f7       	brne	.-24     	; 0x1096 <internal_tal_reset+0x4e>
     10ae:	80 93 6b 05 	sts	0x056B, r24	; 0x80056b <tal_trx_status>
+
+	/*
+	 * Generate a seed for the random number generator in function rand().
+	 * This is required (for example) as seed for the CSMA-CA algorithm.
+	 */
+	tal_generate_rand_seed();
     10b2:	87 df       	rcall	.-242    	; 0xfc2 <tal_generate_rand_seed>
+	 */
+
+	/*
+	 * Init the SEED value of the CSMA backoff algorithm.
+	 */
+	uint16_t rand_value = (uint16_t)rand();
     10b4:	0e 94 1e 14 	call	0x283c	; 0x283c <rand>
+	trx_reg_write(RG_CSMA_SEED_0, (uint8_t)rand_value);
     10b8:	80 93 6d 01 	sts	0x016D, r24	; 0x80016d <__TEXT_REGION_LENGTH__+0x70016d>
+	trx_bit_write(SR_CSMA_SEED_1, (uint8_t)(rand_value >> 8));
     10bc:	ee e6       	ldi	r30, 0x6E	; 110
     10be:	f1 e0       	ldi	r31, 0x01	; 1
     10c0:	80 81       	ld	r24, Z
@@ -2302,44 +3084,106 @@ void wireless_init(void)
     10c4:	88 7f       	andi	r24, 0xF8	; 248
     10c6:	89 2b       	or	r24, r25
     10c8:	80 83       	st	Z, r24
+
+	trx_bit_write(SR_AACK_SET_PD, PD_ACK_BIT_SET_ENABLE); /* ACKs for
     10ca:	80 81       	ld	r24, Z
     10cc:	80 62       	ori	r24, 0x20	; 32
     10ce:	80 83       	st	Z, r24
+	                                                       * data
+	                                                       * requests,
+	                                                       * indicate
+	                                                       * pending data
+	                                                       **/
+	trx_bit_write(SR_RX_SAFE_MODE, RX_SAFE_MODE_ENABLE); /* Enable
     10d0:	ec e4       	ldi	r30, 0x4C	; 76
     10d2:	f1 e0       	ldi	r31, 0x01	; 1
     10d4:	80 81       	ld	r24, Z
     10d6:	80 68       	ori	r24, 0x80	; 128
     10d8:	80 83       	st	Z, r24
+	                                                     * buffer
+	                                                     * protection
+	                                                     * mode */
+	trx_reg_write(RG_IRQ_MASK, TRX_IRQ_DEFAULT);
     10da:	88 e4       	ldi	r24, 0x48	; 72
     10dc:	80 93 4e 01 	sts	0x014E, r24	; 0x80014e <__TEXT_REGION_LENGTH__+0x70014e>
+#if (defined BEACON_SUPPORT) || (defined ENABLE_TSTAMP)
+	/* The TX start timestamp is taken by the respective PAL layer */
+	trx_reg_write(RG_IRQ_MASK1, (1 << TX_START_EN));
+#endif
+	trx_reg_write(0x156, 0xFF); /* RPC feature configuration. */
     10e0:	8f ef       	ldi	r24, 0xFF	; 255
     10e2:	80 93 56 01 	sts	0x0156, r24	; 0x800156 <__TEXT_REGION_LENGTH__+0x700156>
+
+#if (ANTENNA_DIVERSITY == 1)
+	/* Use antenna diversity */
+	trx_bit_write(SR_ANT_CTRL, ANTENNA_DEFAULT);
     10e6:	ed e4       	ldi	r30, 0x4D	; 77
     10e8:	f1 e0       	ldi	r31, 0x01	; 1
     10ea:	80 81       	ld	r24, Z
     10ec:	8c 7f       	andi	r24, 0xFC	; 252
     10ee:	82 60       	ori	r24, 0x02	; 2
     10f0:	80 83       	st	Z, r24
+	trx_bit_write(SR_PDT_THRES, THRES_ANT_DIV_ENABLE);
     10f2:	aa e4       	ldi	r26, 0x4A	; 74
     10f4:	b1 e0       	ldi	r27, 0x01	; 1
     10f6:	8c 91       	ld	r24, X
     10f8:	80 7f       	andi	r24, 0xF0	; 240
     10fa:	83 60       	ori	r24, 0x03	; 3
     10fc:	8c 93       	st	X, r24
+	trx_bit_write(SR_ANT_DIV_EN, ANT_DIV_ENABLE);
     10fe:	80 81       	ld	r24, Z
     1100:	88 60       	ori	r24, 0x08	; 8
+	trx_bit_write(SR_ANT_EXT_SW_EN, ANT_EXT_SW_ENABLE);
     1102:	80 83       	st	Z, r24
     1104:	80 81       	ld	r24, Z
+	tal_generate_rand_seed();
+
+	/* Configure the transceiver register values. */
+	trx_config();
+
+	if (set_default_pib) {
     1106:	84 60       	ori	r24, 0x04	; 4
+		/* Set the default PIB values */
+		init_tal_pib(); /* implementation can be found in 'tal_pib.c' */
     1108:	80 83       	st	Z, r24
     110a:	f1 10       	cpse	r15, r1
+
+	/*
+	 * Write all PIB values to the transceiver
+	 * that are needed by the transceiver itself.
+	 */
+	write_all_tal_pib_to_trx(); /* implementation can be found in
     110c:	30 d2       	rcall	.+1120   	; 0x156e <init_tal_pib>
     110e:	7d d2       	rcall	.+1274   	; 0x160a <write_all_tal_pib_to_trx>
+	                             *'tal_pib.c' */
+
+	/* Reset TAL variables. */
+	tal_state = TAL_IDLE;
     1110:	10 92 70 05 	sts	0x0570, r1	; 0x800570 <tal_state>
+
+#if ((MAC_START_REQUEST_CONFIRM == 1) && (defined BEACON_SUPPORT))
+	tal_beacon_transmission = false;
+#endif /* ((MAC_START_REQUEST_CONFIRM == 1) && (defined BEACON_SUPPORT)) */
+
+	tal_rx_on_required = false;
     1114:	10 92 44 05 	sts	0x0544, r1	; 0x800544 <tal_rx_on_required>
+
+	return MAC_SUCCESS;
     1118:	80 e0       	ldi	r24, 0x00	; 0
     111a:	01 c0       	rjmp	.+2      	; 0x111e <internal_tal_reset+0xd6>
+ *         FAILURE otherwise
+ */
+static retval_t internal_tal_reset(bool set_default_pib)
+{
+	if (trx_reset() != MAC_SUCCESS) {
+		return FAILURE;
     111c:	85 e8       	ldi	r24, 0x85	; 133
+#endif /* ((MAC_START_REQUEST_CONFIRM == 1) && (defined BEACON_SUPPORT)) */
+
+	tal_rx_on_required = false;
+
+	return MAC_SUCCESS;
+}
     111e:	df 91       	pop	r29
     1120:	cf 91       	pop	r28
     1122:	1f 91       	pop	r17
@@ -2348,6 +3192,12 @@ void wireless_init(void)
     1128:	08 95       	ret
 
 0000112a <tal_init>:
+ * \return MAC_SUCCESS  if the transceiver state is changed to TRX_OFF and the
+ *                 current device part number and version number are correct;
+ *         FAILURE otherwise
+ */
+retval_t tal_init(void)
+{
     112a:	cf 92       	push	r12
     112c:	df 92       	push	r13
     112e:	ef 92       	push	r14
@@ -2356,79 +3206,158 @@ void wireless_init(void)
     1134:	1f 93       	push	r17
     1136:	cf 93       	push	r28
     1138:	df 93       	push	r29
+	MCUSR = 0;
     113a:	14 be       	out	0x34, r1	; 52
+
+	/* Enable SRAM Data Retention */
+	DRTRAM0 = _BV(ENDRT);
     113c:	80 e1       	ldi	r24, 0x10	; 16
     113e:	80 93 35 01 	sts	0x0135, r24	; 0x800135 <__TEXT_REGION_LENGTH__+0x700135>
+	DRTRAM1 = _BV(ENDRT);
     1142:	80 93 34 01 	sts	0x0134, r24	; 0x800134 <__TEXT_REGION_LENGTH__+0x700134>
+	DRTRAM2 = _BV(ENDRT);
     1146:	80 93 33 01 	sts	0x0133, r24	; 0x800133 <__TEXT_REGION_LENGTH__+0x700133>
+	DRTRAM3 = _BV(ENDRT);
     114a:	80 93 32 01 	sts	0x0132, r24	; 0x800132 <__TEXT_REGION_LENGTH__+0x700132>
+
+	/* Init the PAL and by this means also the transceiver interface */
+	if (pal_init() != MAC_SUCCESS) {
     114e:	92 dc       	rcall	.-1756   	; 0xa74 <pal_init>
     1150:	81 11       	cpse	r24, r1
     1152:	6d c0       	rjmp	.+218    	; 0x122e <tal_init+0x104>
+	} else if (module == &TCCR4A) {
+		sysclk_enable_module(POWER_RED_REG1, PRTIM4_bm);
+	} else if (module == &TCCR5A) {
+		sysclk_enable_module(POWER_RED_REG1, PRTIM5_bm);
+	} else if (module == &TRX_CTRL_0) {
+		sysclk_enable_module(POWER_RED_REG1, PRTRX24_bm);
     1154:	60 e4       	ldi	r22, 0x40	; 64
     1156:	81 e0       	ldi	r24, 0x01	; 1
     1158:	ba da       	rcall	.-2700   	; 0x6ce <sysclk_enable_module>
+{
+	tal_trx_status_t trx_status;
+	uint8_t poll_counter = 0;
+
+	sysclk_enable_peripheral_clock(&TRX_CTRL_0);
+	TRX_RST_HIGH();
     115a:	c9 e3       	ldi	r28, 0x39	; 57
     115c:	d1 e0       	ldi	r29, 0x01	; 1
     115e:	88 81       	ld	r24, Y
     1160:	81 60       	ori	r24, 0x01	; 1
     1162:	88 83       	st	Y, r24
+	TRX_SLP_TR_LOW();
     1164:	88 81       	ld	r24, Y
     1166:	8d 7f       	andi	r24, 0xFD	; 253
     1168:	88 83       	st	Y, r24
+
+	pal_timer_delay(P_ON_TO_CLKM_AVAILABLE_TYP_US);
     116a:	6b ef       	ldi	r22, 0xFB	; 251
     116c:	71 e0       	ldi	r23, 0x01	; 1
     116e:	80 e0       	ldi	r24, 0x00	; 0
     1170:	90 e0       	ldi	r25, 0x00	; 0
     1172:	1c df       	rcall	.-456    	; 0xfac <__portable_avr_delay_cycles>
+
+	/* Apply reset pulse */
+	TRX_RST_LOW();
     1174:	88 81       	ld	r24, Y
     1176:	8e 7f       	andi	r24, 0xFE	; 254
     1178:	88 83       	st	Y, r24
+	pal_timer_delay(RST_PULSE_WIDTH_US);
     117a:	62 e0       	ldi	r22, 0x02	; 2
     117c:	70 e0       	ldi	r23, 0x00	; 0
     117e:	80 e0       	ldi	r24, 0x00	; 0
     1180:	90 e0       	ldi	r25, 0x00	; 0
     1182:	14 df       	rcall	.-472    	; 0xfac <__portable_avr_delay_cycles>
+	TRX_RST_HIGH();
     1184:	88 81       	ld	r24, Y
     1186:	81 60       	ori	r24, 0x01	; 1
     1188:	88 83       	st	Y, r24
+
+	/* Verify that the trx has reached TRX_OFF. */
+	poll_counter = 0;
+	do {
+		/* Wait a short time interval. */
+		pal_timer_delay(TRX_POLL_WAIT_TIME_US);
     118a:	66 e8       	ldi	r22, 0x86	; 134
     118c:	70 e0       	ldi	r23, 0x00	; 0
     118e:	80 e0       	ldi	r24, 0x00	; 0
     1190:	90 e0       	ldi	r25, 0x00	; 0
     1192:	0c df       	rcall	.-488    	; 0xfac <__portable_avr_delay_cycles>
+
+		trx_status = (tal_trx_status_t)trx_bit_read(SR_TRX_STATUS);
     1194:	80 91 41 01 	lds	r24, 0x0141	; 0x800141 <__TEXT_REGION_LENGTH__+0x700141>
     1198:	8f 71       	andi	r24, 0x1F	; 31
     119a:	ca e0       	ldi	r28, 0x0A	; 10
     119c:	01 e4       	ldi	r16, 0x41	; 65
     119e:	11 e0       	ldi	r17, 0x01	; 1
+
+	/* Verify that the trx has reached TRX_OFF. */
+	poll_counter = 0;
+	do {
+		/* Wait a short time interval. */
+		pal_timer_delay(TRX_POLL_WAIT_TIME_US);
     11a0:	0b c0       	rjmp	.+22     	; 0x11b8 <tal_init+0x8e>
     11a2:	66 e8       	ldi	r22, 0x86	; 134
     11a4:	70 e0       	ldi	r23, 0x00	; 0
     11a6:	80 e0       	ldi	r24, 0x00	; 0
     11a8:	90 e0       	ldi	r25, 0x00	; 0
     11aa:	00 df       	rcall	.-512    	; 0xfac <__portable_avr_delay_cycles>
+
+		trx_status = (tal_trx_status_t)trx_bit_read(SR_TRX_STATUS);
     11ac:	f8 01       	movw	r30, r16
     11ae:	80 81       	ld	r24, Z
     11b0:	8f 71       	andi	r24, 0x1F	; 31
     11b2:	c1 50       	subi	r28, 0x01	; 1
+
+		/* Wait not more than max. value of TR2. */
+		if (poll_counter == RESET_TO_TRX_OFF_ATTEMPTS) {
     11b4:	09 f4       	brne	.+2      	; 0x11b8 <tal_init+0x8e>
     11b6:	51 c0       	rjmp	.+162    	; 0x125a <tal_init+0x130>
+#endif
+			return FAILURE;
+		}
+
+		poll_counter++;
+	} while (trx_status != TRX_OFF);
     11b8:	88 30       	cpi	r24, 0x08	; 8
     11ba:	99 f7       	brne	.-26     	; 0x11a2 <tal_init+0x78>
+
+	tal_trx_status = TRX_OFF;
     11bc:	80 93 6b 05 	sts	0x056B, r24	; 0x80056b <tal_trx_status>
+
+#if !defined(FPGA_EMULATION)
+	/* Check if actually running on an ATmegaRFR2 device. */
+	if (ATMEGARFR2_PART_NUM != trx_reg_read(RG_PART_NUM)) {
     11c0:	80 91 5c 01 	lds	r24, 0x015C	; 0x80015c <__TEXT_REGION_LENGTH__+0x70015c>
     11c4:	84 39       	cpi	r24, 0x94	; 148
     11c6:	09 f0       	breq	.+2      	; 0x11ca <tal_init+0xa0>
     11c8:	48 c0       	rjmp	.+144    	; 0x125a <tal_init+0x130>
     11ca:	35 c0       	rjmp	.+106    	; 0x1236 <tal_init+0x10c>
+		 * in function tal_generate_rand_seed().
+		 */
+		uint8_t *ptr_pib = (uint8_t *)&tal_pib.IeeeAddress;
+
+		for (uint8_t i = 0; i < 8; i++) {
+			*ptr_pib++ = (uint8_t)rand();
     11cc:	0e 94 1e 14 	call	0x283c	; 0x283c <rand>
     11d0:	f8 01       	movw	r30, r16
     11d2:	81 93       	st	Z+, r24
     11d4:	8f 01       	movw	r16, r30
+		 * generated
+		 * in function tal_generate_rand_seed().
+		 */
+		uint8_t *ptr_pib = (uint8_t *)&tal_pib.IeeeAddress;
+
+		for (uint8_t i = 0; i < 8; i++) {
     11d6:	ec 15       	cp	r30, r12
     11d8:	fd 05       	cpc	r31, r13
     11da:	c1 f7       	brne	.-16     	; 0x11cc <tal_init+0xa2>
+	/*
+	 * This while loop is on purpose, since just in the
+	 * rare case that such an address is randomly
+	 * generated again, we must repeat this.
+	 */
+	while ((tal_pib.IeeeAddress == 0x0000000000000000) ||
     11dc:	f7 01       	movw	r30, r14
     11de:	20 81       	ld	r18, Z
     11e0:	31 81       	ldd	r19, Z+1	; 0x01
@@ -2446,38 +3375,90 @@ void wireless_init(void)
     11fc:	18 f0       	brcs	.+6      	; 0x1204 <tal_init+0xda>
     11fe:	0c e4       	ldi	r16, 0x4C	; 76
     1200:	15 e0       	ldi	r17, 0x05	; 5
+
+	/*
+	 * Configure interrupt handling.
+	 * Install handlers for the transceiver interrupts.
+	 */
+	pal_trx_irq_init_rx_end((FUNC_PTR)trx_rx_end_handler_cb);
     1202:	e4 cf       	rjmp	.-56     	; 0x11cc <tal_init+0xa2>
     1204:	81 e6       	ldi	r24, 0x61	; 97
     1206:	9a e0       	ldi	r25, 0x0A	; 10
+	pal_trx_irq_init_tx_end((FUNC_PTR)trx_tx_end_handler_cb);
     1208:	38 d0       	rcall	.+112    	; 0x127a <pal_trx_irq_init_rx_end>
     120a:	82 e7       	ldi	r24, 0x72	; 114
     120c:	9a e0       	ldi	r25, 0x0A	; 10
+	pal_trx_irq_init_awake((FUNC_PTR)trx_awake_handler_cb);
     120e:	30 d0       	rcall	.+96     	; 0x1270 <pal_trx_irq_init_tx_end>
     1210:	83 e8       	ldi	r24, 0x83	; 131
     1212:	9a e0       	ldi	r25, 0x0A	; 10
     1214:	37 d0       	rcall	.+110    	; 0x1284 <pal_trx_irq_init_awake>
+	pal_trx_irq_init_tstamp((FUNC_PTR)trx_irq_timestamp_handler_cb);
+#endif /* (defined BEACON_SUPPORT) || (defined ENABLE_TSTAMP) */
+
+	/* Initialize the buffer management module and get a buffer to store
+	 * reveived frames. */
+	bmm_buffer_init();
     1216:	32 dc       	rcall	.-1948   	; 0xa7c <bmm_buffer_init>
+	tal_rx_buffer = bmm_buffer_alloc(LARGE_BUFFER_SIZE);
     1218:	8b e8       	ldi	r24, 0x8B	; 139
     121a:	54 dc       	rcall	.-1880   	; 0xac4 <bmm_buffer_alloc>
     121c:	90 93 73 04 	sts	0x0473, r25	; 0x800473 <tal_rx_buffer+0x1>
     1220:	80 93 72 04 	sts	0x0472, r24	; 0x800472 <tal_rx_buffer>
+	/* Init incoming frame queue */
+#ifdef ENABLE_QUEUE_CAPACITY
+	qmm_queue_init(&tal_incoming_frame_queue,
+			TAL_INCOMING_FRAME_QUEUE_CAPACITY);
+#else
+	qmm_queue_init(&tal_incoming_frame_queue);
     1224:	85 e4       	ldi	r24, 0x45	; 69
     1226:	95 e0       	ldi	r25, 0x05	; 5
     1228:	de dc       	rcall	.-1604   	; 0xbe6 <qmm_queue_init>
     122a:	cb d5       	rcall	.+2966   	; 0x1dc2 <tfa_init>
+#endif  /* ENABLE_QUEUE_CAPACITY */
+
+#ifdef ENABLE_TFA
+	tfa_init();
     122c:	17 c0       	rjmp	.+46     	; 0x125c <tal_init+0x132>
     122e:	c5 e8       	ldi	r28, 0x85	; 133
+#endif
+
+	return MAC_SUCCESS;
     1230:	15 c0       	rjmp	.+42     	; 0x125c <tal_init+0x132>
+	DRTRAM2 = _BV(ENDRT);
+	DRTRAM3 = _BV(ENDRT);
+
+	/* Init the PAL and by this means also the transceiver interface */
+	if (pal_init() != MAC_SUCCESS) {
+		return FAILURE;
     1232:	c5 e8       	ldi	r28, 0x85	; 133
     1234:	13 c0       	rjmp	.+38     	; 0x125c <tal_init+0x132>
+	 * Do the reset stuff.
+	 * Set the default PIBs.
+	 * Generate random seed.
+	 */
+	if (internal_tal_reset(true) != MAC_SUCCESS) {
+		return FAILURE;
     1236:	81 e0       	ldi	r24, 0x01	; 1
     1238:	07 df       	rcall	.-498    	; 0x1048 <internal_tal_reset>
+	/*
+	 * Do the reset stuff.
+	 * Set the default PIBs.
+	 * Generate random seed.
+	 */
+	if (internal_tal_reset(true) != MAC_SUCCESS) {
     123a:	c8 2f       	mov	r28, r24
     123c:	81 11       	cpse	r24, r1
     123e:	f9 cf       	rjmp	.-14     	; 0x1232 <tal_init+0x108>
     1240:	0f 2e       	mov	r0, r31
     1242:	fc e4       	ldi	r31, 0x4C	; 76
     1244:	ef 2e       	mov	r14, r31
+	/*
+	 * This while loop is on purpose, since just in the
+	 * rare case that such an address is randomly
+	 * generated again, we must repeat this.
+	 */
+	while ((tal_pib.IeeeAddress == 0x0000000000000000) ||
     1246:	f5 e0       	ldi	r31, 0x05	; 5
     1248:	ff 2e       	mov	r15, r31
     124a:	f0 2d       	mov	r31, r0
@@ -2491,7 +3472,19 @@ void wireless_init(void)
     125a:	c5 e8       	ldi	r28, 0x85	; 133
     125c:	8c 2f       	mov	r24, r28
     125e:	df 91       	pop	r29
+	if (pal_init() != MAC_SUCCESS) {
+		return FAILURE;
+	}
+
+	if (trx_init() != MAC_SUCCESS) {
+		return FAILURE;
     1260:	cf 91       	pop	r28
+#ifdef ENABLE_TFA
+	tfa_init();
+#endif
+
+	return MAC_SUCCESS;
+} /* tal_init() */
     1262:	1f 91       	pop	r17
     1264:	0f 91       	pop	r16
     1266:	ff 90       	pop	r15
@@ -2503,6 +3496,12 @@ void wireless_init(void)
 00001270 <pal_trx_irq_init_tx_end>:
     1270:	90 93 7b 04 	sts	0x047B, r25	; 0x80047b <irq_hdl_trx_tx_end+0x1>
     1274:	80 93 7a 04 	sts	0x047A, r24	; 0x80047a <irq_hdl_trx_tx_end>
+ *
+ * \param trx_irq_cb Callback function for the transceiver CCA ED END interrupt
+ */
+void pal_trx_irq_init_cca_ed(FUNC_PTR trx_irq_cb)
+{
+	irq_hdl_trx_cca_ed = (irq_handler_t)trx_irq_cb;
     1278:	08 95       	ret
 
 0000127a <pal_trx_irq_init_rx_end>:
@@ -2511,11 +3510,23 @@ void wireless_init(void)
     1282:	08 95       	ret
 
 00001284 <pal_trx_irq_init_awake>:
+ *
+ * \param trx_irq_cb Callback function for the transceiver AWAKE interrupt
+ */
+void pal_trx_irq_init_awake(FUNC_PTR trx_irq_cb)
+{
+	irq_hdl_trx_awake = (irq_handler_t)trx_irq_cb;
     1284:	90 93 75 04 	sts	0x0475, r25	; 0x800475 <irq_hdl_trx_awake+0x1>
     1288:	80 93 74 04 	sts	0x0474, r24	; 0x800474 <irq_hdl_trx_awake>
     128c:	08 95       	ret
 
 0000128e <__vector_63>:
+
+/**
+ * \brief ISR for transceiver's transmit end interrupt
+ */
+ISR(TRX24_TX_END_vect)
+{
     128e:	1f 92       	push	r1
     1290:	0f 92       	push	r0
     1292:	0f b6       	in	r0, 0x3f	; 63
@@ -2535,9 +3546,11 @@ void wireless_init(void)
     12ae:	bf 93       	push	r27
     12b0:	ef 93       	push	r30
     12b2:	ff 93       	push	r31
+	irq_hdl_trx_tx_end();
     12b4:	e0 91 7a 04 	lds	r30, 0x047A	; 0x80047a <irq_hdl_trx_tx_end>
     12b8:	f0 91 7b 04 	lds	r31, 0x047B	; 0x80047b <irq_hdl_trx_tx_end+0x1>
     12bc:	19 95       	eicall
+}
     12be:	ff 91       	pop	r31
     12c0:	ef 91       	pop	r30
     12c2:	bf 91       	pop	r27
@@ -2559,6 +3572,12 @@ void wireless_init(void)
     12e2:	18 95       	reti
 
 000012e4 <__vector_60>:
+
+/**
+ * \brief ISR for transceiver's receive end interrupt
+ */
+ISR(TRX24_RX_END_vect)
+{
     12e4:	1f 92       	push	r1
     12e6:	0f 92       	push	r0
     12e8:	0f b6       	in	r0, 0x3f	; 63
@@ -2578,9 +3597,11 @@ void wireless_init(void)
     1304:	bf 93       	push	r27
     1306:	ef 93       	push	r30
     1308:	ff 93       	push	r31
+	irq_hdl_trx_rx_end();
     130a:	e0 91 78 04 	lds	r30, 0x0478	; 0x800478 <irq_hdl_trx_rx_end>
     130e:	f0 91 79 04 	lds	r31, 0x0479	; 0x800479 <irq_hdl_trx_rx_end+0x1>
     1312:	19 95       	eicall
+}
     1314:	ff 91       	pop	r31
     1316:	ef 91       	pop	r30
     1318:	bf 91       	pop	r27
@@ -2602,6 +3623,12 @@ void wireless_init(void)
     1338:	18 95       	reti
 
 0000133a <__vector_61>:
+
+/**
+ * \brief ISR for transceiver's CCA/ED measurement done interrupt
+ */
+ISR(TRX24_CCA_ED_DONE_vect)
+{
     133a:	1f 92       	push	r1
     133c:	0f 92       	push	r0
     133e:	0f b6       	in	r0, 0x3f	; 63
@@ -2621,9 +3648,11 @@ void wireless_init(void)
     135a:	bf 93       	push	r27
     135c:	ef 93       	push	r30
     135e:	ff 93       	push	r31
+	irq_hdl_trx_cca_ed();
     1360:	e0 91 76 04 	lds	r30, 0x0476	; 0x800476 <irq_hdl_trx_cca_ed>
     1364:	f0 91 77 04 	lds	r31, 0x0477	; 0x800477 <irq_hdl_trx_cca_ed+0x1>
     1368:	19 95       	eicall
+}
     136a:	ff 91       	pop	r31
     136c:	ef 91       	pop	r30
     136e:	bf 91       	pop	r27
@@ -2645,6 +3674,12 @@ void wireless_init(void)
     138e:	18 95       	reti
 
 00001390 <__vector_64>:
+
+/**
+ * \brief ISR for transceiver's Awake interrupt
+ */
+ISR(TRX24_AWAKE_vect)
+{
     1390:	1f 92       	push	r1
     1392:	0f 92       	push	r0
     1394:	0f b6       	in	r0, 0x3f	; 63
@@ -2664,9 +3699,11 @@ void wireless_init(void)
     13b0:	bf 93       	push	r27
     13b2:	ef 93       	push	r30
     13b4:	ff 93       	push	r31
+	irq_hdl_trx_awake();
     13b6:	e0 91 74 04 	lds	r30, 0x0474	; 0x800474 <irq_hdl_trx_awake>
     13ba:	f0 91 75 04 	lds	r31, 0x0475	; 0x800475 <irq_hdl_trx_awake+0x1>
     13be:	19 95       	eicall
+}
     13c0:	ff 91       	pop	r31
     13c2:	ef 91       	pop	r30
     13c4:	bf 91       	pop	r27
@@ -2688,11 +3725,21 @@ void wireless_init(void)
     13e4:	18 95       	reti
 
 000013e6 <__vector_59>:
+ *
+ * By the time the SFD is detected, the hardware timestamps the
+ * current frame in the SCTSR register.
+ */
+ISR(TRX24_RX_START_vect)
+{
     13e6:	1f 92       	push	r1
     13e8:	0f 92       	push	r0
     13ea:	0f b6       	in	r0, 0x3f	; 63
     13ec:	0f 92       	push	r0
     13ee:	11 24       	eor	r1, r1
+#if (defined BEACON_SUPPORT) || (defined ENABLE_TSTAMP)
+	irq_hdl_trx_tstamp();
+#endif  /* #if (defined BEACON_SUPPORT) || (defined ENABLE_TSTAMP) */
+}
     13f0:	0f 90       	pop	r0
     13f2:	0f be       	out	0x3f, r0	; 63
     13f4:	0f 90       	pop	r0
@@ -2700,11 +3747,21 @@ void wireless_init(void)
     13f8:	18 95       	reti
 
 000013fa <__vector_57>:
+
+/**
+ * \brief ISR for transceiver's PLL lock interrupt
+ */
+ISR(TRX24_PLL_LOCK_vect)
+{
     13fa:	1f 92       	push	r1
     13fc:	0f 92       	push	r0
     13fe:	0f b6       	in	r0, 0x3f	; 63
     1400:	0f 92       	push	r0
     1402:	11 24       	eor	r1, r1
+#ifdef ENABLE_ALL_TRX_IRQS
+	irq_hdl_trx_pll_lock();
+#endif  /*  ENABLE_ALL_TRX_IRQS*/
+}
     1404:	0f 90       	pop	r0
     1406:	0f be       	out	0x3f, r0	; 63
     1408:	0f 90       	pop	r0
@@ -2712,11 +3769,21 @@ void wireless_init(void)
     140c:	18 95       	reti
 
 0000140e <__vector_58>:
+
+/**
+ * \brief ISR for transceiver's PLL unlock interrupt
+ */
+ISR(TRX24_PLL_UNLOCK_vect)
+{
     140e:	1f 92       	push	r1
     1410:	0f 92       	push	r0
     1412:	0f b6       	in	r0, 0x3f	; 63
     1414:	0f 92       	push	r0
     1416:	11 24       	eor	r1, r1
+#ifdef ENABLE_ALL_TRX_IRQS
+	irq_hdl_trx_pll_unlock();
+#endif  /*  ENABLE_ALL_TRX_IRQS*/
+}
     1418:	0f 90       	pop	r0
     141a:	0f be       	out	0x3f, r0	; 63
     141c:	0f 90       	pop	r0
@@ -2724,11 +3791,21 @@ void wireless_init(void)
     1420:	18 95       	reti
 
 00001422 <__vector_62>:
+
+/**
+ * \brief ISR for transceiver's address match interrupt
+ */
+ISR(TRX24_XAH_AMI_vect)
+{
     1422:	1f 92       	push	r1
     1424:	0f 92       	push	r0
     1426:	0f b6       	in	r0, 0x3f	; 63
     1428:	0f 92       	push	r0
     142a:	11 24       	eor	r1, r1
+#ifdef ENABLE_ALL_TRX_IRQS
+	irq_hdl_trx_ami();
+#endif  /*  ENABLE_ALL_TRX_IRQS*/
+}
     142c:	0f 90       	pop	r0
     142e:	0f be       	out	0x3f, r0	; 63
     1430:	0f 90       	pop	r0
@@ -2736,11 +3813,21 @@ void wireless_init(void)
     1434:	18 95       	reti
 
 00001436 <__vector_71>:
+
+/**
+ * \brief ISR for transceiver's battery low interrupt
+ */
+ISR(BAT_LOW_vect)
+{
     1436:	1f 92       	push	r1
     1438:	0f 92       	push	r0
     143a:	0f b6       	in	r0, 0x3f	; 63
     143c:	0f 92       	push	r0
     143e:	11 24       	eor	r1, r1
+#ifdef ENABLE_ALL_TRX_IRQS
+	irq_hdl_trx_batmon();
+#endif  /*  ENABLE_ALL_TRX_IRQS*/
+}
     1440:	0f 90       	pop	r0
     1442:	0f be       	out	0x3f, r0	; 63
     1444:	0f 90       	pop	r0
@@ -2748,11 +3835,21 @@ void wireless_init(void)
     1448:	18 95       	reti
 
 0000144a <__vector_70>:
+
+/**
+ * \brief ISR for transceiver's AES interrupt
+ */
+ISR(AES_READY_vect)
+{
     144a:	1f 92       	push	r1
     144c:	0f 92       	push	r0
     144e:	0f b6       	in	r0, 0x3f	; 63
     1450:	0f 92       	push	r0
     1452:	11 24       	eor	r1, r1
+#ifdef ENABLE_ALL_TRX_IRQS
+	irq_hdl_trx_aes_ready();
+#endif  /*  ENABLE_ALL_TRX_IRQS*/
+}
     1454:	0f 90       	pop	r0
     1456:	0f be       	out	0x3f, r0	; 63
     1458:	0f 90       	pop	r0
@@ -2760,11 +3857,23 @@ void wireless_init(void)
     145c:	18 95       	reti
 
 0000145e <__vector_72>:
+
+/**
+ * \brief ISR for transceiver's TX_START interrupt
+ */
+ISR(TRX24_TX_START_vect)
+{
     145e:	1f 92       	push	r1
     1460:	0f 92       	push	r0
     1462:	0f b6       	in	r0, 0x3f	; 63
     1464:	0f 92       	push	r0
     1466:	11 24       	eor	r1, r1
+	pal_tx_timestamp = PAL_US_PER_SYMBOLS * SC_READ32(SCCNT);
+#endif
+#ifdef ENABLE_ALL_TRX_IRQS
+	irq_hdl_trx_tx_start();
+#endif  /*  ENABLE_ALL_TRX_IRQS*/
+}
     1468:	0f 90       	pop	r0
     146a:	0f be       	out	0x3f, r0	; 63
     146c:	0f 90       	pop	r0
@@ -2772,11 +3881,21 @@ void wireless_init(void)
     1470:	18 95       	reti
 
 00001472 <__vector_73>:
+
+/**
+ * \brief ISR for transceiver's AMI0 interrupt
+ */
+ISR(TRX24_AMI0_vect)
+{
     1472:	1f 92       	push	r1
     1474:	0f 92       	push	r0
     1476:	0f b6       	in	r0, 0x3f	; 63
     1478:	0f 92       	push	r0
     147a:	11 24       	eor	r1, r1
+#ifdef ENABLE_ALL_TRX_IRQS
+	irq_hdl_trx_ami0();
+#endif  /*  ENABLE_ALL_TRX_IRQS*/
+}
     147c:	0f 90       	pop	r0
     147e:	0f be       	out	0x3f, r0	; 63
     1480:	0f 90       	pop	r0
@@ -2784,11 +3903,21 @@ void wireless_init(void)
     1484:	18 95       	reti
 
 00001486 <__vector_74>:
+
+/**
+ * \brief ISR for transceiver's AMI1 interrupt
+ */
+ISR(TRX24_AMI1_vect)
+{
     1486:	1f 92       	push	r1
     1488:	0f 92       	push	r0
     148a:	0f b6       	in	r0, 0x3f	; 63
     148c:	0f 92       	push	r0
     148e:	11 24       	eor	r1, r1
+#ifdef ENABLE_ALL_TRX_IRQS
+	irq_hdl_trx_ami1();
+#endif  /*  ENABLE_ALL_TRX_IRQS*/
+}
     1490:	0f 90       	pop	r0
     1492:	0f be       	out	0x3f, r0	; 63
     1494:	0f 90       	pop	r0
@@ -2796,11 +3925,21 @@ void wireless_init(void)
     1498:	18 95       	reti
 
 0000149a <__vector_75>:
+
+/**
+ * \brief ISR for transceiver's AMI2 interrupt
+ */
+ISR(TRX24_AMI2_vect)
+{
     149a:	1f 92       	push	r1
     149c:	0f 92       	push	r0
     149e:	0f b6       	in	r0, 0x3f	; 63
     14a0:	0f 92       	push	r0
     14a2:	11 24       	eor	r1, r1
+#ifdef ENABLE_ALL_TRX_IRQS
+	irq_hdl_trx_ami2();
+#endif  /*  ENABLE_ALL_TRX_IRQS*/
+}
     14a4:	0f 90       	pop	r0
     14a6:	0f be       	out	0x3f, r0	; 63
     14a8:	0f 90       	pop	r0
@@ -2808,11 +3947,21 @@ void wireless_init(void)
     14ac:	18 95       	reti
 
 000014ae <__vector_76>:
+
+/**
+ * \brief ISR for transceiver's AMI3 interrupt
+ */
+ISR(TRX24_AMI3_vect)
+{
     14ae:	1f 92       	push	r1
     14b0:	0f 92       	push	r0
     14b2:	0f b6       	in	r0, 0x3f	; 63
     14b4:	0f 92       	push	r0
     14b6:	11 24       	eor	r1, r1
+#ifdef ENABLE_ALL_TRX_IRQS
+	irq_hdl_trx_ami3();
+#endif  /*  ENABLE_ALL_TRX_IRQS*/
+}
     14b8:	0f 90       	pop	r0
     14ba:	0f be       	out	0x3f, r0	; 63
     14bc:	0f 90       	pop	r0
@@ -2820,18 +3969,45 @@ void wireless_init(void)
     14c0:	18 95       	reti
 
 000014c2 <trx_rx_end_handler_cb>:
+ * \brief Transceiver interrupt handler
+ *
+ * This function handles the transceiver generated interrupts for RX end.
+ */
+void trx_rx_end_handler_cb(void)
+{
     14c2:	1f 93       	push	r17
     14c4:	cf 93       	push	r28
     14c6:	df 93       	push	r29
     14c8:	1f 92       	push	r1
     14ca:	cd b7       	in	r28, 0x3d	; 61
     14cc:	de b7       	in	r29, 0x3e	; 62
+
+typedef uint8_t irqflags_t;
+
+static inline irqflags_t cpu_irq_save(void)
+{
+	volatile irqflags_t flags = SREG;
     14ce:	8f b7       	in	r24, 0x3f	; 63
     14d0:	89 83       	std	Y+1, r24	; 0x01
+	cpu_irq_disable();
     14d2:	f8 94       	cli
+	return flags;
     14d4:	19 81       	ldd	r17, Y+1	; 0x01
+	ENTER_CRITICAL_REGION();
+
+	/* Handle rx interrupt. */
+	handle_received_frame_irq(); /* see tal_rx.c */
     14d6:	19 d2       	rcall	.+1074   	; 0x190a <handle_received_frame_irq>
+}
+
+static inline void cpu_irq_restore(irqflags_t flags)
+{
+	barrier();
+	SREG = flags;
     14d8:	1f bf       	out	0x3f, r17	; 63
+
+	LEAVE_CRITICAL_REGION();
+} /* trx_rx_end_handler_cb() */
     14da:	0f 90       	pop	r0
     14dc:	df 91       	pop	r29
     14de:	cf 91       	pop	r28
@@ -2839,18 +4015,45 @@ void wireless_init(void)
     14e2:	08 95       	ret
 
 000014e4 <trx_tx_end_handler_cb>:
+ * \brief Transceiver interrupt handler
+ *
+ * This function handles the transceiver generated interrupts for TX end.
+ */
+void trx_tx_end_handler_cb(void)
+{
     14e4:	1f 93       	push	r17
     14e6:	cf 93       	push	r28
     14e8:	df 93       	push	r29
     14ea:	1f 92       	push	r1
     14ec:	cd b7       	in	r28, 0x3d	; 61
     14ee:	de b7       	in	r29, 0x3e	; 62
+
+typedef uint8_t irqflags_t;
+
+static inline irqflags_t cpu_irq_save(void)
+{
+	volatile irqflags_t flags = SREG;
     14f0:	8f b7       	in	r24, 0x3f	; 63
     14f2:	89 83       	std	Y+1, r24	; 0x01
+	cpu_irq_disable();
     14f4:	f8 94       	cli
+	return flags;
     14f6:	19 81       	ldd	r17, Y+1	; 0x01
+	ENTER_CRITICAL_REGION();
+
+	/* Get the result and push it to the queue. */
+	handle_tx_end_irq();        /* see tal_tx.c */
     14f8:	a6 d3       	rcall	.+1868   	; 0x1c46 <handle_tx_end_irq>
+}
+
+static inline void cpu_irq_restore(irqflags_t flags)
+{
+	barrier();
+	SREG = flags;
     14fa:	1f bf       	out	0x3f, r17	; 63
+
+	LEAVE_CRITICAL_REGION();
+} /* trx_tx_end_handler_cb() */
     14fc:	0f 90       	pop	r0
     14fe:	df 91       	pop	r29
     1500:	cf 91       	pop	r28
@@ -2858,11 +4061,23 @@ void wireless_init(void)
     1504:	08 95       	ret
 
 00001506 <trx_awake_handler_cb>:
+ * This function handles the transceiver awake end interrupt.
+ */
+void trx_awake_handler_cb(void)
+{
+	/* Set the wake-up flag. */
+	tal_awake_end_flag = true;
     1506:	81 e0       	ldi	r24, 0x01	; 1
     1508:	80 93 6f 05 	sts	0x056F, r24	; 0x80056f <tal_awake_end_flag>
     150c:	08 95       	ret
 
 0000150e <limit_tx_pwr>:
+		/* Invalid attribute id */
+		return MAC_UNSUPPORTED_ATTRIBUTE;
+	}
+
+	return MAC_SUCCESS;
+} /* tal_pib_get() */
     150e:	85 fd       	sbrc	r24, 5
     1510:	03 c0       	rjmp	.+6      	; 0x1518 <limit_tx_pwr+0xa>
     1512:	98 2f       	mov	r25, r24
@@ -2960,6 +4175,12 @@ void wireless_init(void)
     15c6:	08 95       	ret
 
 000015c8 <convert_phyTransmitPower_to_reg_value>:
+{
+	int8_t dbm_value;
+	uint8_t i;
+	int8_t trx_tx_level;
+
+	dbm_value = CONV_phyTransmitPower_TO_DBM(phyTransmitPower_value);
     15c8:	85 fd       	sbrc	r24, 5
     15ca:	02 c0       	rjmp	.+4      	; 0x15d0 <convert_phyTransmitPower_to_reg_value+0x8>
     15cc:	8f 73       	andi	r24, 0x3F	; 63
@@ -2967,58 +4188,124 @@ void wireless_init(void)
     15d0:	81 95       	neg	r24
     15d2:	8f 71       	andi	r24, 0x1F	; 31
     15d4:	81 95       	neg	r24
+
+	/* Compare to the register value to identify the value that matches. */
+	for (i = 0; i < sizeof(tx_pwr_table); i++) {
+		trx_tx_level = (int8_t)PGM_READ_BYTE(&tx_pwr_table[i]);
     15d6:	e2 e6       	ldi	r30, 0x62	; 98
     15d8:	f1 e0       	ldi	r31, 0x01	; 1
     15da:	94 91       	lpm	r25, Z
+		if (trx_tx_level <= dbm_value) {
     15dc:	89 17       	cp	r24, r25
     15de:	3c f4       	brge	.+14     	; 0x15ee <convert_phyTransmitPower_to_reg_value+0x26>
     15e0:	e3 e6       	ldi	r30, 0x63	; 99
     15e2:	f1 e0       	ldi	r31, 0x01	; 1
+	int8_t trx_tx_level;
+
+	dbm_value = CONV_phyTransmitPower_TO_DBM(phyTransmitPower_value);
+
+	/* Compare to the register value to identify the value that matches. */
+	for (i = 0; i < sizeof(tx_pwr_table); i++) {
     15e4:	21 e0       	ldi	r18, 0x01	; 1
+		trx_tx_level = (int8_t)PGM_READ_BYTE(&tx_pwr_table[i]);
     15e6:	94 91       	lpm	r25, Z
+		if (trx_tx_level <= dbm_value) {
     15e8:	89 17       	cp	r24, r25
     15ea:	3c f0       	brlt	.+14     	; 0x15fa <convert_phyTransmitPower_to_reg_value+0x32>
     15ec:	01 c0       	rjmp	.+2      	; 0x15f0 <convert_phyTransmitPower_to_reg_value+0x28>
+	int8_t trx_tx_level;
+
+	dbm_value = CONV_phyTransmitPower_TO_DBM(phyTransmitPower_value);
+
+	/* Compare to the register value to identify the value that matches. */
+	for (i = 0; i < sizeof(tx_pwr_table); i++) {
     15ee:	20 e0       	ldi	r18, 0x00	; 0
+		trx_tx_level = (int8_t)PGM_READ_BYTE(&tx_pwr_table[i]);
+		if (trx_tx_level <= dbm_value) {
+			if (trx_tx_level < dbm_value) {
     15f0:	98 17       	cp	r25, r24
     15f2:	4c f4       	brge	.+18     	; 0x1606 <convert_phyTransmitPower_to_reg_value+0x3e>
+				return (i - 1);
     15f4:	8f ef       	ldi	r24, 0xFF	; 255
     15f6:	82 0f       	add	r24, r18
     15f8:	08 95       	ret
+	int8_t trx_tx_level;
+
+	dbm_value = CONV_phyTransmitPower_TO_DBM(phyTransmitPower_value);
+
+	/* Compare to the register value to identify the value that matches. */
+	for (i = 0; i < sizeof(tx_pwr_table); i++) {
     15fa:	2f 5f       	subi	r18, 0xFF	; 255
     15fc:	31 96       	adiw	r30, 0x01	; 1
     15fe:	20 31       	cpi	r18, 0x10	; 16
     1600:	91 f7       	brne	.-28     	; 0x15e6 <convert_phyTransmitPower_to_reg_value+0x1e>
+			return i;
+		}
+	}
+
+	/* This code should never be reached. */
+	return 0;
     1602:	80 e0       	ldi	r24, 0x00	; 0
     1604:	08 95       	ret
     1606:	82 2f       	mov	r24, r18
+}
     1608:	08 95       	ret
 
 0000160a <write_all_tal_pib_to_trx>:
+ *
+ * This function writes all shadow PIB variables to the transceiver.
+ * It is assumed that the radio does not sleep.
+ */
+void write_all_tal_pib_to_trx(void)
+{
     160a:	cf 93       	push	r28
     160c:	df 93       	push	r29
+	uint8_t *ptr_to_reg;
+
+	trx_reg_write(RG_PAN_ID_0, (uint8_t)tal_pib.PANId);
     160e:	ec e4       	ldi	r30, 0x4C	; 76
     1610:	f5 e0       	ldi	r31, 0x05	; 5
     1612:	86 85       	ldd	r24, Z+14	; 0x0e
     1614:	80 93 62 01 	sts	0x0162, r24	; 0x800162 <__TEXT_REGION_LENGTH__+0x700162>
+	trx_reg_write(RG_PAN_ID_1, (uint8_t)(tal_pib.PANId >> 8));
     1618:	87 85       	ldd	r24, Z+15	; 0x0f
     161a:	80 93 63 01 	sts	0x0163, r24	; 0x800163 <__TEXT_REGION_LENGTH__+0x700163>
     161e:	e4 e6       	ldi	r30, 0x64	; 100
     1620:	f1 e0       	ldi	r31, 0x01	; 1
+
+	ptr_to_reg = (uint8_t *)&tal_pib.IeeeAddress;
     1622:	ac e4       	ldi	r26, 0x4C	; 76
     1624:	b5 e0       	ldi	r27, 0x05	; 5
+	for (uint8_t i = 0; i < 8; i++) {
+		trx_reg_write((RG_IEEE_ADDR_0 + i), *ptr_to_reg);
     1626:	8d 91       	ld	r24, X+
     1628:	81 93       	st	Z+, r24
+
+	trx_reg_write(RG_PAN_ID_0, (uint8_t)tal_pib.PANId);
+	trx_reg_write(RG_PAN_ID_1, (uint8_t)(tal_pib.PANId >> 8));
+
+	ptr_to_reg = (uint8_t *)&tal_pib.IeeeAddress;
+	for (uint8_t i = 0; i < 8; i++) {
     162a:	ec 36       	cpi	r30, 0x6C	; 108
     162c:	31 e0       	ldi	r19, 0x01	; 1
     162e:	f3 07       	cpc	r31, r19
     1630:	d1 f7       	brne	.-12     	; 0x1626 <write_all_tal_pib_to_trx+0x1c>
+		trx_reg_write((RG_IEEE_ADDR_0 + i), *ptr_to_reg);
+		ptr_to_reg++;
+	}
+
+	trx_reg_write(RG_SHORT_ADDR_0, (uint8_t)tal_pib.ShortAddress);
     1632:	ec e4       	ldi	r30, 0x4C	; 76
     1634:	f5 e0       	ldi	r31, 0x05	; 5
     1636:	84 85       	ldd	r24, Z+12	; 0x0c
     1638:	80 93 60 01 	sts	0x0160, r24	; 0x800160 <__TEXT_REGION_LENGTH__+0x700160>
+	trx_reg_write(RG_SHORT_ADDR_1,
     163c:	85 85       	ldd	r24, Z+13	; 0x0d
     163e:	80 93 61 01 	sts	0x0161, r24	; 0x800161 <__TEXT_REGION_LENGTH__+0x700161>
+			(uint8_t)(tal_pib.ShortAddress >> 8));
+
+	/* configure TX_ARET; CSMA and CCA */
+	trx_bit_write(SR_CCA_MODE, tal_pib.CCAMode);
     1642:	48 e4       	ldi	r20, 0x48	; 72
     1644:	51 e0       	ldi	r21, 0x01	; 1
     1646:	da 01       	movw	r26, r20
@@ -3033,6 +4320,7 @@ void wireless_init(void)
     1658:	82 2b       	or	r24, r18
     165a:	da 01       	movw	r26, r20
     165c:	8c 93       	st	X, r24
+	trx_bit_write(SR_MIN_BE, tal_pib.MinBE);
     165e:	cf e6       	ldi	r28, 0x6F	; 111
     1660:	d1 e0       	ldi	r29, 0x01	; 1
     1662:	88 81       	ld	r24, Y
@@ -3041,6 +4329,8 @@ void wireless_init(void)
     1668:	80 7f       	andi	r24, 0xF0	; 240
     166a:	89 2b       	or	r24, r25
     166c:	88 83       	st	Y, r24
+
+	trx_bit_write(SR_AACK_I_AM_COORD, tal_pib.PrivatePanCoordinator);
     166e:	2e e6       	ldi	r18, 0x6E	; 110
     1670:	31 e0       	ldi	r19, 0x01	; 1
     1672:	d9 01       	movw	r26, r18
@@ -3053,6 +4343,9 @@ void wireless_init(void)
     1680:	87 7f       	andi	r24, 0xF7	; 247
     1682:	89 2b       	or	r24, r25
     1684:	8c 93       	st	X, r24
+
+	/* set phy parameter */
+	trx_bit_write(SR_MAX_BE, tal_pib.MaxBE);
     1686:	28 81       	ld	r18, Y
     1688:	93 8d       	ldd	r25, Z+27	; 0x1b
     168a:	b0 e1       	ldi	r27, 0x10	; 16
@@ -3063,6 +4356,12 @@ void wireless_init(void)
     1694:	9f 70       	andi	r25, 0x0F	; 15
     1696:	89 2b       	or	r24, r25
     1698:	88 83       	st	Y, r24
+
+#ifdef HIGH_DATA_RATE_SUPPORT
+	apply_channel_page_configuration(tal_pib.CurrentPage);
+#endif
+
+	trx_bit_write(SR_CHANNEL, tal_pib.CurrentChannel);
     169a:	da 01       	movw	r26, r20
     169c:	8c 91       	ld	r24, X
     169e:	93 89       	ldd	r25, Z+19	; 0x13
@@ -3070,8 +4369,14 @@ void wireless_init(void)
     16a2:	80 7e       	andi	r24, 0xE0	; 224
     16a4:	89 2b       	or	r24, r25
     16a6:	8c 93       	st	X, r24
+	{
+		uint8_t reg_value;
+
+		reg_value = convert_phyTransmitPower_to_reg_value(
     16a8:	87 89       	ldd	r24, Z+23	; 0x17
     16aa:	8e df       	rcall	.-228    	; 0x15c8 <convert_phyTransmitPower_to_reg_value>
+				tal_pib.TransmitPower);
+		trx_bit_write(SR_TX_PWR, reg_value);
     16ac:	e5 e4       	ldi	r30, 0x45	; 69
     16ae:	f1 e0       	ldi	r31, 0x01	; 1
     16b0:	90 81       	ld	r25, Z
@@ -3079,31 +4384,97 @@ void wireless_init(void)
     16b4:	8f 70       	andi	r24, 0x0F	; 15
     16b6:	89 2b       	or	r24, r25
     16b8:	80 83       	st	Z, r24
+#ifdef PROMISCUOUS_MODE
+	if (tal_pib.PromiscuousMode) {
+		set_trx_state(CMD_RX_ON);
+	}
+#endif
+}
     16ba:	df 91       	pop	r29
     16bc:	cf 91       	pop	r28
     16be:	08 95       	ret
 
 000016c0 <tal_pib_set>:
+ *         in TAL_IDLE state.
+ *         MAC_SUCCESS if the attempt to set the PIB attribute was successful
+ *         TAL_TRX_ASLEEP if trx is in SLEEP mode and access to trx is required
+ */
+retval_t tal_pib_set(uint8_t attribute, pib_value_t *value)
+{
     16c0:	cf 93       	push	r28
     16c2:	df 93       	push	r29
+	 * and those that are simple variable udpates.
+	 * Ensure that the transceiver is not in SLEEP.
+	 * If it is in SLEEP, change it to TRX_OFF.
+	 */
+
+	switch (attribute) {
     16c4:	8e 34       	cpi	r24, 0x4E	; 78
     16c6:	41 f0       	breq	.+16     	; 0x16d8 <tal_pib_set+0x18>
     16c8:	89 35       	cpi	r24, 0x59	; 89
     16ca:	61 f4       	brne	.+24     	; 0x16e4 <tal_pib_set+0x24>
+
+		/*
+		 * The new PIB value is not immediately written to the
+		 * transceiver. This is done on a frame-by-frame base.
+		 */
+		tal_pib.MaxFrameRetries = value->pib_value_8bit;
     16cc:	fb 01       	movw	r30, r22
     16ce:	80 81       	ld	r24, Z
     16d0:	80 93 68 05 	sts	0x0568, r24	; 0x800568 <tal_pib+0x1c>
+			return MAC_UNSUPPORTED_ATTRIBUTE;
+		}
+
+		break; /* end of 'default' from 'switch (attribute)' */
+	}
+	return MAC_SUCCESS;
     16d4:	80 e0       	ldi	r24, 0x00	; 0
+		/*
+		 * The new PIB value is not immediately written to the
+		 * transceiver. This is done on a frame-by-frame base.
+		 */
+		tal_pib.MaxFrameRetries = value->pib_value_8bit;
+		break;
     16d6:	0b c1       	rjmp	.+534    	; 0x18ee <tal_pib_set+0x22e>
+
+		/*
+		 * The new PIB value is not immediately written to the
+		 * transceiver. This is done on a frame-by-frame base.
+		 */
+		tal_pib.MaxCSMABackoffs = value->pib_value_8bit;
     16d8:	fb 01       	movw	r30, r22
     16da:	80 81       	ld	r24, Z
     16dc:	80 93 60 05 	sts	0x0560, r24	; 0x800560 <tal_pib+0x14>
+			return MAC_UNSUPPORTED_ATTRIBUTE;
+		}
+
+		break; /* end of 'default' from 'switch (attribute)' */
+	}
+	return MAC_SUCCESS;
     16e0:	80 e0       	ldi	r24, 0x00	; 0
+		/*
+		 * The new PIB value is not immediately written to the
+		 * transceiver. This is done on a frame-by-frame base.
+		 */
+		tal_pib.MaxCSMABackoffs = value->pib_value_8bit;
+		break;
     16e2:	05 c1       	rjmp	.+522    	; 0x18ee <tal_pib_set+0x22e>
+		/*
+		 * Following PIBs require access to trx.
+		 * Therefore trx must be at least in TRX_OFF.
+		 */
+
+		if (tal_trx_status == TRX_SLEEP) {
     16e4:	90 91 6b 05 	lds	r25, 0x056B	; 0x80056b <tal_trx_status>
     16e8:	9f 30       	cpi	r25, 0x0F	; 15
     16ea:	09 f4       	brne	.+2      	; 0x16ee <tal_pib_set+0x2e>
     16ec:	dc c0       	rjmp	.+440    	; 0x18a6 <tal_pib_set+0x1e6>
+			/* While trx is in SLEEP, register cannot be accessed.
+			**/
+			return TAL_TRX_ASLEEP;
+		}
+
+		switch (attribute) {
     16ee:	8b 30       	cpi	r24, 0x0B	; 11
     16f0:	09 f4       	brne	.+2      	; 0x16f4 <tal_pib_set+0x34>
     16f2:	c9 c0       	rjmp	.+402    	; 0x1886 <tal_pib_set+0x1c6>
@@ -3139,15 +4510,28 @@ void wireless_init(void)
     172e:	09 f4       	brne	.+2      	; 0x1732 <tal_pib_set+0x72>
     1730:	8b c0       	rjmp	.+278    	; 0x1848 <tal_pib_set+0x188>
     1732:	bb c0       	rjmp	.+374    	; 0x18aa <tal_pib_set+0x1ea>
+		case macMinBE:
+			tal_pib.MinBE = value->pib_value_8bit;
     1734:	fb 01       	movw	r30, r22
     1736:	80 81       	ld	r24, Z
     1738:	ec e4       	ldi	r30, 0x4C	; 76
     173a:	f5 e0       	ldi	r31, 0x05	; 5
     173c:	85 8b       	std	Z+21, r24	; 0x15
+			/*
+			 * macMinBE must not be larger than macMaxBE or
+			 * calculation
+			 * of macMaxFrameWaitTotalTime will fail.
+			 */
+			if (tal_pib.MinBE > tal_pib.MaxBE) {
     173e:	93 8d       	ldd	r25, Z+27	; 0x1b
     1740:	98 17       	cp	r25, r24
     1742:	10 f4       	brcc	.+4      	; 0x1748 <tal_pib_set+0x88>
+				tal_pib.MinBE = tal_pib.MaxBE;
     1744:	90 93 61 05 	sts	0x0561, r25	; 0x800561 <tal_pib+0x15>
+			}
+#endif  /* REDUCED_PARAM_CHECK */
+
+			trx_bit_write(SR_MIN_BE, tal_pib.MinBE);
     1748:	ef e6       	ldi	r30, 0x6F	; 111
     174a:	f1 e0       	ldi	r31, 0x01	; 1
     174c:	80 81       	ld	r24, Z
@@ -3156,8 +4540,23 @@ void wireless_init(void)
     1754:	80 7f       	andi	r24, 0xF0	; 240
     1756:	89 2b       	or	r24, r25
     1758:	80 83       	st	Z, r24
+			return MAC_UNSUPPORTED_ATTRIBUTE;
+		}
+
+		break; /* end of 'default' from 'switch (attribute)' */
+	}
+	return MAC_SUCCESS;
     175a:	80 e0       	ldi	r24, 0x00	; 0
+				tal_pib.MinBE = tal_pib.MaxBE;
+			}
+#endif  /* REDUCED_PARAM_CHECK */
+
+			trx_bit_write(SR_MIN_BE, tal_pib.MinBE);
+			break;
     175c:	c8 c0       	rjmp	.+400    	; 0x18ee <tal_pib_set+0x22e>
+
+		case macPANId:
+			tal_pib.PANId = value->pib_value_16bit;
     175e:	fb 01       	movw	r30, r22
     1760:	90 81       	ld	r25, Z
     1762:	81 81       	ldd	r24, Z+1	; 0x01
@@ -3165,10 +4564,27 @@ void wireless_init(void)
     1766:	f5 e0       	ldi	r31, 0x05	; 5
     1768:	96 87       	std	Z+14, r25	; 0x0e
     176a:	87 87       	std	Z+15, r24	; 0x0f
+			trx_reg_write(RG_PAN_ID_0, (uint8_t)tal_pib.PANId);
     176c:	90 93 62 01 	sts	0x0162, r25	; 0x800162 <__TEXT_REGION_LENGTH__+0x700162>
+			trx_reg_write(RG_PAN_ID_1,
     1770:	80 93 63 01 	sts	0x0163, r24	; 0x800163 <__TEXT_REGION_LENGTH__+0x700163>
+			return MAC_UNSUPPORTED_ATTRIBUTE;
+		}
+
+		break; /* end of 'default' from 'switch (attribute)' */
+	}
+	return MAC_SUCCESS;
     1774:	80 e0       	ldi	r24, 0x00	; 0
+		case macPANId:
+			tal_pib.PANId = value->pib_value_16bit;
+			trx_reg_write(RG_PAN_ID_0, (uint8_t)tal_pib.PANId);
+			trx_reg_write(RG_PAN_ID_1,
+					(uint8_t)(tal_pib.PANId >> 8));
+			break;
     1776:	bb c0       	rjmp	.+374    	; 0x18ee <tal_pib_set+0x22e>
+
+		case macShortAddress:
+			tal_pib.ShortAddress = value->pib_value_16bit;
     1778:	fb 01       	movw	r30, r22
     177a:	90 81       	ld	r25, Z
     177c:	81 81       	ldd	r24, Z+1	; 0x01
@@ -3176,14 +4592,44 @@ void wireless_init(void)
     1780:	f5 e0       	ldi	r31, 0x05	; 5
     1782:	94 87       	std	Z+12, r25	; 0x0c
     1784:	85 87       	std	Z+13, r24	; 0x0d
+			trx_reg_write(RG_SHORT_ADDR_0,
     1786:	90 93 60 01 	sts	0x0160, r25	; 0x800160 <__TEXT_REGION_LENGTH__+0x700160>
+					(uint8_t)tal_pib.ShortAddress);
+			trx_reg_write(RG_SHORT_ADDR_1,
     178a:	80 93 61 01 	sts	0x0161, r24	; 0x800161 <__TEXT_REGION_LENGTH__+0x700161>
+			return MAC_UNSUPPORTED_ATTRIBUTE;
+		}
+
+		break; /* end of 'default' from 'switch (attribute)' */
+	}
+	return MAC_SUCCESS;
     178e:	80 e0       	ldi	r24, 0x00	; 0
+			tal_pib.ShortAddress = value->pib_value_16bit;
+			trx_reg_write(RG_SHORT_ADDR_0,
+					(uint8_t)tal_pib.ShortAddress);
+			trx_reg_write(RG_SHORT_ADDR_1,
+					(uint8_t)(tal_pib.ShortAddress >> 8));
+			break;
     1790:	ae c0       	rjmp	.+348    	; 0x18ee <tal_pib_set+0x22e>
+
+		case phyCurrentChannel:
+			if (tal_state != TAL_IDLE) {
     1792:	80 91 70 05 	lds	r24, 0x0570	; 0x800570 <tal_state>
     1796:	81 11       	cpse	r24, r1
     1798:	8a c0       	rjmp	.+276    	; 0x18ae <tal_pib_set+0x1ee>
+				return TAL_BUSY;
+			}
+
+			if ((uint32_t)TRX_SUPPORTED_CHANNELS &
+					((uint32_t)0x01 <<
+					value->pib_value_8bit)) {
     179a:	88 81       	ld	r24, Y
+		case phyCurrentChannel:
+			if (tal_state != TAL_IDLE) {
+				return TAL_BUSY;
+			}
+
+			if ((uint32_t)TRX_SUPPORTED_CHANNELS &
     179c:	40 e0       	ldi	r20, 0x00	; 0
     179e:	58 ef       	ldi	r21, 0xF8	; 248
     17a0:	6f ef       	ldi	r22, 0xFF	; 255
@@ -3198,30 +4644,71 @@ void wireless_init(void)
     17b2:	d2 f7       	brpl	.-12     	; 0x17a8 <tal_pib_set+0xe8>
     17b4:	40 ff       	sbrs	r20, 0
     17b6:	7d c0       	rjmp	.+250    	; 0x18b2 <tal_pib_set+0x1f2>
+
+				/*
+				 * Set trx to "soft" off avoiding that ongoing
+				 * transaction (e.g. ACK) are interrupted.
+				 */
+				if (tal_trx_status != TRX_OFF) {
     17b8:	98 30       	cpi	r25, 0x08	; 8
     17ba:	09 f4       	brne	.+2      	; 0x17be <tal_pib_set+0xfe>
     17bc:	80 c0       	rjmp	.+256    	; 0x18be <tal_pib_set+0x1fe>
+					                                   **/
+					do {
+						/* set TRX_OFF until it could be
+						 * set;
+						 * trx might be busy */
+					} while (set_trx_state(CMD_TRX_OFF) !=
     17be:	88 e0       	ldi	r24, 0x08	; 8
     17c0:	6d da       	rcall	.-2854   	; 0xc9c <set_trx_state>
+							TRX_OFF);
     17c2:	88 30       	cpi	r24, 0x08	; 8
     17c4:	e1 f7       	brne	.-8      	; 0x17be <tal_pib_set+0xfe>
     17c6:	86 c0       	rjmp	.+268    	; 0x18d4 <tal_pib_set+0x214>
+					return MAC_INVALID_PARAMETER;
+				}
+			}
+
+#else
+			if (tal_state != TAL_IDLE) {
     17c8:	80 91 70 05 	lds	r24, 0x0570	; 0x800570 <tal_state>
     17cc:	81 11       	cpse	r24, r1
     17ce:	73 c0       	rjmp	.+230    	; 0x18b6 <tal_pib_set+0x1f6>
+				return TAL_BUSY;
+			} else {
+				uint8_t page;
+
+				page = value->pib_value_8bit;
+				if (page != 0) {
     17d0:	88 81       	ld	r24, Y
     17d2:	81 11       	cpse	r24, r1
     17d4:	72 c0       	rjmp	.+228    	; 0x18ba <tal_pib_set+0x1fa>
     17d6:	8b c0       	rjmp	.+278    	; 0x18ee <tal_pib_set+0x22e>
+			}
+#endif  /* #ifdef HIGH_DATA_RATE_SUPPORT */
+			break;
+
+		case macMaxBE:
+			tal_pib.MaxBE = value->pib_value_8bit;
     17d8:	fb 01       	movw	r30, r22
     17da:	90 81       	ld	r25, Z
     17dc:	ec e4       	ldi	r30, 0x4C	; 76
     17de:	f5 e0       	ldi	r31, 0x05	; 5
     17e0:	93 8f       	std	Z+27, r25	; 0x1b
+			/*
+			 * macMinBE must not be larger than macMaxBE or
+			 * calculation
+			 * of macMaxFrameWaitTotalTime will fail.
+			 */
+			if (tal_pib.MaxBE < tal_pib.MinBE) {
     17e2:	85 89       	ldd	r24, Z+21	; 0x15
     17e4:	98 17       	cp	r25, r24
     17e6:	10 f4       	brcc	.+4      	; 0x17ec <tal_pib_set+0x12c>
+				tal_pib.MinBE = tal_pib.MaxBE;
     17e8:	90 93 61 05 	sts	0x0561, r25	; 0x800561 <tal_pib+0x15>
+			}
+#endif  /* REDUCED_PARAM_CHECK */
+			trx_bit_write(SR_MAX_BE, tal_pib.MaxBE);
     17ec:	ef e6       	ldi	r30, 0x6F	; 111
     17ee:	f1 e0       	ldi	r31, 0x01	; 1
     17f0:	80 81       	ld	r24, Z
@@ -3233,15 +4720,40 @@ void wireless_init(void)
     17fc:	11 24       	eor	r1, r1
     17fe:	82 2b       	or	r24, r18
     1800:	80 83       	st	Z, r24
+			return MAC_UNSUPPORTED_ATTRIBUTE;
+		}
+
+		break; /* end of 'default' from 'switch (attribute)' */
+	}
+	return MAC_SUCCESS;
     1802:	80 e0       	ldi	r24, 0x00	; 0
+			if (tal_pib.MaxBE < tal_pib.MinBE) {
+				tal_pib.MinBE = tal_pib.MaxBE;
+			}
+#endif  /* REDUCED_PARAM_CHECK */
+			trx_bit_write(SR_MAX_BE, tal_pib.MaxBE);
+			break;
     1804:	74 c0       	rjmp	.+232    	; 0x18ee <tal_pib_set+0x22e>
+
+		case phyTransmitPower:
+		{
+			uint8_t reg_value;
+
+			tal_pib.TransmitPower = value->pib_value_8bit;
     1806:	88 81       	ld	r24, Y
     1808:	cc e4       	ldi	r28, 0x4C	; 76
     180a:	d5 e0       	ldi	r29, 0x05	; 5
+
+			/* Limit tal_pib.TransmitPower to max/min trx values */
+			tal_pib.TransmitPower = limit_tx_pwr(
     180c:	8f 8b       	std	Y+23, r24	; 0x17
     180e:	7f de       	rcall	.-770    	; 0x150e <limit_tx_pwr>
+					tal_pib.TransmitPower);
+			reg_value = convert_phyTransmitPower_to_reg_value(
     1810:	8f 8b       	std	Y+23, r24	; 0x17
     1812:	da de       	rcall	.-588    	; 0x15c8 <convert_phyTransmitPower_to_reg_value>
+					tal_pib.TransmitPower);
+			trx_bit_write(SR_TX_PWR, reg_value);
     1814:	e5 e4       	ldi	r30, 0x45	; 69
     1816:	f1 e0       	ldi	r31, 0x01	; 1
     1818:	90 81       	ld	r25, Z
@@ -3249,10 +4761,26 @@ void wireless_init(void)
     181c:	8f 70       	andi	r24, 0x0F	; 15
     181e:	89 2b       	or	r24, r25
     1820:	80 83       	st	Z, r24
+			return MAC_UNSUPPORTED_ATTRIBUTE;
+		}
+
+		break; /* end of 'default' from 'switch (attribute)' */
+	}
+	return MAC_SUCCESS;
     1822:	80 e0       	ldi	r24, 0x00	; 0
+					tal_pib.TransmitPower);
+			reg_value = convert_phyTransmitPower_to_reg_value(
+					tal_pib.TransmitPower);
+			trx_bit_write(SR_TX_PWR, reg_value);
+		}
+		break;
     1824:	64 c0       	rjmp	.+200    	; 0x18ee <tal_pib_set+0x22e>
+
+		case phyCCAMode:
+			tal_pib.CCAMode = value->pib_value_8bit;
     1826:	88 81       	ld	r24, Y
     1828:	80 93 5e 05 	sts	0x055E, r24	; 0x80055e <tal_pib+0x12>
+			trx_bit_write(SR_CCA_MODE, tal_pib.CCAMode);
     182c:	e8 e4       	ldi	r30, 0x48	; 72
     182e:	f1 e0       	ldi	r31, 0x01	; 1
     1830:	20 81       	ld	r18, Z
@@ -3265,8 +4793,26 @@ void wireless_init(void)
     183e:	9f 79       	andi	r25, 0x9F	; 159
     1840:	89 2b       	or	r24, r25
     1842:	80 83       	st	Z, r24
+			return MAC_UNSUPPORTED_ATTRIBUTE;
+		}
+
+		break; /* end of 'default' from 'switch (attribute)' */
+	}
+	return MAC_SUCCESS;
     1844:	80 e0       	ldi	r24, 0x00	; 0
+		break;
+
+		case phyCCAMode:
+			tal_pib.CCAMode = value->pib_value_8bit;
+			trx_bit_write(SR_CCA_MODE, tal_pib.CCAMode);
+			break;
     1846:	53 c0       	rjmp	.+166    	; 0x18ee <tal_pib_set+0x22e>
+
+		case macIeeeAddress:
+		{
+			uint8_t *ptr;
+
+			tal_pib.IeeeAddress = value->pib_value_64bit;
     1848:	fb 01       	movw	r30, r22
     184a:	b0 81       	ld	r27, Z
     184c:	a1 81       	ldd	r26, Z+1	; 0x01
@@ -3288,19 +4834,42 @@ void wireless_init(void)
     186c:	87 83       	std	Z+7, r24	; 0x07
     186e:	e4 e6       	ldi	r30, 0x64	; 100
     1870:	f1 e0       	ldi	r31, 0x01	; 1
+			ptr = (uint8_t *)&tal_pib.IeeeAddress;
     1872:	ac e4       	ldi	r26, 0x4C	; 76
     1874:	b5 e0       	ldi	r27, 0x05	; 5
+
+			for (uint8_t i = 0; i < 8; i++) {
+				trx_reg_write((RG_IEEE_ADDR_0 + i), *ptr);
     1876:	8d 91       	ld	r24, X+
     1878:	81 93       	st	Z+, r24
+			uint8_t *ptr;
+
+			tal_pib.IeeeAddress = value->pib_value_64bit;
+			ptr = (uint8_t *)&tal_pib.IeeeAddress;
+
+			for (uint8_t i = 0; i < 8; i++) {
     187a:	ec 36       	cpi	r30, 0x6C	; 108
     187c:	31 e0       	ldi	r19, 0x01	; 1
     187e:	f3 07       	cpc	r31, r19
     1880:	d1 f7       	brne	.-12     	; 0x1876 <tal_pib_set+0x1b6>
+			return MAC_UNSUPPORTED_ATTRIBUTE;
+		}
+
+		break; /* end of 'default' from 'switch (attribute)' */
+	}
+	return MAC_SUCCESS;
     1882:	80 e0       	ldi	r24, 0x00	; 0
     1884:	34 c0       	rjmp	.+104    	; 0x18ee <tal_pib_set+0x22e>
+			}
+		}
+		break;
+
+		case mac_i_pan_coordinator:
+			tal_pib.PrivatePanCoordinator = value->pib_value_bool;
     1886:	fb 01       	movw	r30, r22
     1888:	80 81       	ld	r24, Z
     188a:	80 93 62 05 	sts	0x0562, r24	; 0x800562 <tal_pib+0x16>
+			trx_bit_write(SR_AACK_I_AM_COORD,
     188e:	ee e6       	ldi	r30, 0x6E	; 110
     1890:	f1 e0       	ldi	r31, 0x01	; 1
     1892:	90 81       	ld	r25, Z
@@ -3311,21 +4880,76 @@ void wireless_init(void)
     189c:	97 7f       	andi	r25, 0xF7	; 247
     189e:	89 2b       	or	r24, r25
     18a0:	80 83       	st	Z, r24
+			return MAC_UNSUPPORTED_ATTRIBUTE;
+		}
+
+		break; /* end of 'default' from 'switch (attribute)' */
+	}
+	return MAC_SUCCESS;
     18a2:	80 e0       	ldi	r24, 0x00	; 0
+
+		case mac_i_pan_coordinator:
+			tal_pib.PrivatePanCoordinator = value->pib_value_bool;
+			trx_bit_write(SR_AACK_I_AM_COORD,
+					tal_pib.PrivatePanCoordinator);
+			break;
     18a4:	24 c0       	rjmp	.+72     	; 0x18ee <tal_pib_set+0x22e>
+		 */
+
+		if (tal_trx_status == TRX_SLEEP) {
+			/* While trx is in SLEEP, register cannot be accessed.
+			**/
+			return TAL_TRX_ASLEEP;
     18a6:	81 e8       	ldi	r24, 0x81	; 129
     18a8:	22 c0       	rjmp	.+68     	; 0x18ee <tal_pib_set+0x22e>
+			 * w.r.t.
+			 * compliance operation.
+			 * The ACK timing can be reduced to 2 symbols using TFA
+			 * function.
+			 */
+			return MAC_UNSUPPORTED_ATTRIBUTE;
     18aa:	84 ef       	ldi	r24, 0xF4	; 244
     18ac:	20 c0       	rjmp	.+64     	; 0x18ee <tal_pib_set+0x22e>
+					(uint8_t)(tal_pib.ShortAddress >> 8));
+			break;
+
+		case phyCurrentChannel:
+			if (tal_state != TAL_IDLE) {
+				return TAL_BUSY;
     18ae:	86 e8       	ldi	r24, 0x86	; 134
     18b0:	1e c0       	rjmp	.+60     	; 0x18ee <tal_pib_set+0x22e>
+				if (previous_trx_status != TRX_OFF) {
+					/* Set to default state */
+					set_trx_state(CMD_RX_AACK_ON);
+				}
+			} else {
+				return MAC_INVALID_PARAMETER;
     18b2:	88 ee       	ldi	r24, 0xE8	; 232
     18b4:	1c c0       	rjmp	.+56     	; 0x18ee <tal_pib_set+0x22e>
+				}
+			}
+
+#else
+			if (tal_state != TAL_IDLE) {
+				return TAL_BUSY;
     18b6:	86 e8       	ldi	r24, 0x86	; 134
     18b8:	1a c0       	rjmp	.+52     	; 0x18ee <tal_pib_set+0x22e>
+			} else {
+				uint8_t page;
+
+				page = value->pib_value_8bit;
+				if (page != 0) {
+					return MAC_INVALID_PARAMETER;
     18ba:	88 ee       	ldi	r24, 0xE8	; 232
     18bc:	18 c0       	rjmp	.+48     	; 0x18ee <tal_pib_set+0x22e>
+						 * trx might be busy */
+					} while (set_trx_state(CMD_TRX_OFF) !=
+							TRX_OFF);
+				}
+
+				tal_pib.CurrentChannel = value->pib_value_8bit;
     18be:	80 93 5f 05 	sts	0x055F, r24	; 0x80055f <tal_pib+0x13>
+				trx_bit_write(SR_CHANNEL,
     18c2:	e8 e4       	ldi	r30, 0x48	; 72
     18c4:	f1 e0       	ldi	r31, 0x01	; 1
     18c6:	90 81       	ld	r25, Z
@@ -3333,30 +4957,70 @@ void wireless_init(void)
     18ca:	8f 71       	andi	r24, 0x1F	; 31
     18cc:	89 2b       	or	r24, r25
     18ce:	80 83       	st	Z, r24
+			return MAC_UNSUPPORTED_ATTRIBUTE;
+		}
+
+		break; /* end of 'default' from 'switch (attribute)' */
+	}
+	return MAC_SUCCESS;
     18d0:	80 e0       	ldi	r24, 0x00	; 0
     18d2:	0d c0       	rjmp	.+26     	; 0x18ee <tal_pib_set+0x22e>
+						 * trx might be busy */
+					} while (set_trx_state(CMD_TRX_OFF) !=
+							TRX_OFF);
+				}
+
+				tal_pib.CurrentChannel = value->pib_value_8bit;
     18d4:	88 81       	ld	r24, Y
     18d6:	80 93 5f 05 	sts	0x055F, r24	; 0x80055f <tal_pib+0x13>
+				trx_bit_write(SR_CHANNEL,
     18da:	e8 e4       	ldi	r30, 0x48	; 72
     18dc:	f1 e0       	ldi	r31, 0x01	; 1
     18de:	90 81       	ld	r25, Z
     18e0:	90 7e       	andi	r25, 0xE0	; 224
     18e2:	8f 71       	andi	r24, 0x1F	; 31
     18e4:	89 2b       	or	r24, r25
+						tal_pib.CurrentChannel);
+				/* Re-store previous trx state */
+				if (previous_trx_status != TRX_OFF) {
+					/* Set to default state */
+					set_trx_state(CMD_RX_AACK_ON);
     18e6:	80 83       	st	Z, r24
     18e8:	86 e1       	ldi	r24, 0x16	; 22
     18ea:	d8 d9       	rcall	.-3152   	; 0xc9c <set_trx_state>
+			return MAC_UNSUPPORTED_ATTRIBUTE;
+		}
+
+		break; /* end of 'default' from 'switch (attribute)' */
+	}
+	return MAC_SUCCESS;
     18ec:	80 e0       	ldi	r24, 0x00	; 0
+} /* tal_pib_set() */
     18ee:	df 91       	pop	r29
     18f0:	cf 91       	pop	r28
     18f2:	08 95       	ret
 
 000018f4 <__portable_avr_delay_cycles>:
+ *
+ * @{
+ */
+__always_optimize
+static inline void __portable_avr_delay_cycles(unsigned long n)
+{
     18f4:	04 c0       	rjmp	.+8      	; 0x18fe <__portable_avr_delay_cycles+0xa>
+	while (n) {
+		barrier();
+		n--;
     18f6:	61 50       	subi	r22, 0x01	; 1
     18f8:	71 09       	sbc	r23, r1
     18fa:	81 09       	sbc	r24, r1
     18fc:	91 09       	sbc	r25, r1
+ * @{
+ */
+__always_optimize
+static inline void __portable_avr_delay_cycles(unsigned long n)
+{
+	while (n) {
     18fe:	61 15       	cp	r22, r1
     1900:	71 05       	cpc	r23, r1
     1902:	81 05       	cpc	r24, r1
@@ -3365,6 +5029,12 @@ void wireless_init(void)
     1908:	08 95       	ret
 
 0000190a <handle_received_frame_irq>:
+ *
+ * This function handles transceiver interrupts for received frames and
+ * uploads the frames from the trx.
+ */
+void handle_received_frame_irq(void)
+{
     190a:	cf 92       	push	r12
     190c:	df 92       	push	r13
     190e:	ef 92       	push	r14
@@ -3373,31 +5043,80 @@ void wireless_init(void)
     1914:	1f 93       	push	r17
     1916:	cf 93       	push	r28
     1918:	df 93       	push	r29
+	/* Extended frame length appended by LQI and ED. */
+	uint8_t ext_frame_length;
+	frame_info_t *receive_frame;
+	uint8_t *frame_ptr;
+
+	if (tal_rx_buffer == NULL) {
     191a:	e0 91 72 04 	lds	r30, 0x0472	; 0x800472 <tal_rx_buffer>
     191e:	f0 91 73 04 	lds	r31, 0x0473	; 0x800473 <tal_rx_buffer+0x1>
     1922:	30 97       	sbiw	r30, 0x00	; 0
     1924:	71 f4       	brne	.+28     	; 0x1942 <handle_received_frame_irq+0x38>
+		 * Although the buffer protection mode is enabled and the
+		 * receiver has
+		 * been switched to PLL_ON, the next incoming frame was faster.
+		 * It cannot be handled and is discarded.
+		 */
+		trx_bit_write(SR_RX_SAFE_MODE, RX_SAFE_MODE_DISABLE); /*
     1926:	cc e4       	ldi	r28, 0x4C	; 76
     1928:	d1 e0       	ldi	r29, 0x01	; 1
     192a:	88 81       	ld	r24, Y
     192c:	8f 77       	andi	r24, 0x7F	; 127
     192e:	88 83       	st	Y, r24
+		                                                       *
+		                                                       *
+		                                                       *protection
+		                                                       * mode
+		                                                       **/
+		pal_timer_delay(2); /* Allow pin change to get effective */
     1930:	63 e0       	ldi	r22, 0x03	; 3
     1932:	70 e0       	ldi	r23, 0x00	; 0
     1934:	80 e0       	ldi	r24, 0x00	; 0
     1936:	90 e0       	ldi	r25, 0x00	; 0
     1938:	dd df       	rcall	.-70     	; 0x18f4 <__portable_avr_delay_cycles>
+		trx_bit_write(SR_RX_SAFE_MODE, RX_SAFE_MODE_ENABLE); /*
     193a:	88 81       	ld	r24, Y
     193c:	80 68       	ori	r24, 0x80	; 128
     193e:	88 83       	st	Y, r24
+		                                                      *
+		                                                      *
+		                                                      *protection
+		                                                      * mode
+		                                                      **/
+		return;
     1940:	48 c0       	rjmp	.+144    	; 0x19d2 <handle_received_frame_irq+0xc8>
+		}
+	}
+#endif
+
+	/* Get ED value; needed to normalize LQI. */
+	ed_value = trx_reg_read(RG_PHY_ED_LEVEL);
     1942:	00 91 47 01 	lds	r16, 0x0147	; 0x800147 <__TEXT_REGION_LENGTH__+0x700147>
+
+	/* Get frame length from transceiver. */
+	phy_frame_len = ext_frame_length = trx_reg_read(RG_TST_RX_LENGTH);
     1946:	10 91 7b 01 	lds	r17, 0x017B	; 0x80017b <__TEXT_REGION_LENGTH__+0x70017b>
+
+	/* Check for valid frame length. */
+	if (phy_frame_len > 127) {
     194a:	11 23       	and	r17, r17
     194c:	0c f4       	brge	.+2      	; 0x1950 <handle_received_frame_irq+0x46>
     194e:	41 c0       	rjmp	.+130    	; 0x19d2 <handle_received_frame_irq+0xc8>
+		                                                      * mode
+		                                                      **/
+		return;
+	}
+
+	receive_frame = (frame_info_t *)BMM_BUFFER_POINTER(tal_rx_buffer);
     1950:	e0 80       	ld	r14, Z
     1952:	f1 80       	ldd	r15, Z+1	; 0x01
+	 * In addition to that, the LQI and ED value are uploaded, too.
+	 */
+	ext_frame_length += LQI_LEN + ED_VAL_LEN;
+
+	/* Update payload pointer to store received frame. */
+	frame_ptr = (uint8_t *)receive_frame + LARGE_BUFFER_SIZE -
     1954:	82 e0       	ldi	r24, 0x02	; 2
     1956:	81 0f       	add	r24, r17
     1958:	eb e8       	ldi	r30, 0x8B	; 139
@@ -3407,6 +5126,12 @@ void wireless_init(void)
     1960:	e7 01       	movw	r28, r14
     1962:	ce 0f       	add	r28, r30
     1964:	df 1f       	adc	r29, r31
+	 * Note: The following code is different from other non-single chip
+	 * transceivers, where reading the frame via SPI contains the length
+	 * field
+	 * in the first octet.
+	 */
+	trx_frame_read(frame_ptr, phy_frame_len + LQI_LEN);
     1966:	c1 2e       	mov	r12, r17
     1968:	d1 2c       	mov	r13, r1
     196a:	a6 01       	movw	r20, r12
@@ -3416,45 +5141,89 @@ void wireless_init(void)
     1972:	71 e0       	ldi	r23, 0x01	; 1
     1974:	ce 01       	movw	r24, r28
     1976:	70 d7       	rcall	.+3808   	; 0x2858 <memcpy>
+	frame_ptr--;
     1978:	fe 01       	movw	r30, r28
+	*frame_ptr = phy_frame_len;
     197a:	12 93       	st	-Z, r17
+	receive_frame->mpdu = frame_ptr;
     197c:	d7 01       	movw	r26, r14
     197e:	18 96       	adiw	r26, 0x08	; 8
     1980:	fc 93       	st	X, r31
     1982:	ee 93       	st	-X, r30
     1984:	17 97       	sbiw	r26, 0x07	; 7
+	/* Add ED value at the end of the frame buffer. */
+	receive_frame->mpdu[phy_frame_len + LQI_LEN + ED_VAL_LEN] = ed_value;
     1986:	ec 0d       	add	r30, r12
     1988:	fd 1d       	adc	r31, r13
     198a:	02 83       	std	Z+2, r16	; 0x02
+	receive_frame->time_stamp = tal_rx_timestamp;
+#endif  /* #if (defined BEACON_SUPPORT) || (defined ENABLE_TSTAMP) */
+
+	/* Append received frame to incoming_frame_queue and get new rx buffer.
+	**/
+	qmm_queue_append(&tal_incoming_frame_queue, tal_rx_buffer);
     198c:	60 91 72 04 	lds	r22, 0x0472	; 0x800472 <tal_rx_buffer>
     1990:	70 91 73 04 	lds	r23, 0x0473	; 0x800473 <tal_rx_buffer+0x1>
     1994:	85 e4       	ldi	r24, 0x45	; 69
     1996:	95 e0       	ldi	r25, 0x05	; 5
+
+	/* The previous buffer is eaten up and a new buffer is not assigned yet.
+	**/
+	tal_rx_buffer = bmm_buffer_alloc(LARGE_BUFFER_SIZE);
     1998:	2d d9       	rcall	.-3494   	; 0xbf4 <qmm_queue_append>
     199a:	8b e8       	ldi	r24, 0x8B	; 139
     199c:	93 d8       	rcall	.-3802   	; 0xac4 <bmm_buffer_alloc>
     199e:	90 93 73 04 	sts	0x0473, r25	; 0x800473 <tal_rx_buffer+0x1>
     19a2:	80 93 72 04 	sts	0x0472, r24	; 0x800472 <tal_rx_buffer>
+
+	/* Check if receive buffer is available */
+	if (NULL == tal_rx_buffer) {
     19a6:	89 2b       	or	r24, r25
     19a8:	21 f4       	brne	.+8      	; 0x19b2 <handle_received_frame_irq+0xa8>
+		 * re-enabled yet.
+		 * Buffer protection will be re-enabled after buffer becomes
+		 * available
+		 */
+		/* set_trx_state(CMD_PLL_ON); */
+		tal_rx_on_required = true;
     19aa:	81 e0       	ldi	r24, 0x01	; 1
     19ac:	80 93 44 05 	sts	0x0544, r24	; 0x800544 <tal_rx_on_required>
     19b0:	0d c0       	rjmp	.+26     	; 0x19cc <handle_received_frame_irq+0xc2>
+		/*
+		 * Release the protected buffer and set it again for further
+		 * protection since
+		 * the buffer is available
+		 */
+		trx_bit_write(SR_RX_SAFE_MODE, RX_SAFE_MODE_DISABLE); /*
     19b2:	cc e4       	ldi	r28, 0x4C	; 76
     19b4:	d1 e0       	ldi	r29, 0x01	; 1
     19b6:	88 81       	ld	r24, Y
     19b8:	8f 77       	andi	r24, 0x7F	; 127
     19ba:	88 83       	st	Y, r24
+		                                                       *
+		                                                       *
+		                                                       *protection
+		                                                       * mode
+		                                                       **/
+		pal_timer_delay(2); /* Allow pin change to get effective */
     19bc:	63 e0       	ldi	r22, 0x03	; 3
     19be:	70 e0       	ldi	r23, 0x00	; 0
     19c0:	80 e0       	ldi	r24, 0x00	; 0
     19c2:	90 e0       	ldi	r25, 0x00	; 0
     19c4:	97 df       	rcall	.-210    	; 0x18f4 <__portable_avr_delay_cycles>
+		trx_bit_write(SR_RX_SAFE_MODE, RX_SAFE_MODE_ENABLE); /*
     19c6:	88 81       	ld	r24, Y
     19c8:	80 68       	ori	r24, 0x80	; 128
     19ca:	88 83       	st	Y, r24
+	 * transmission
+	 * end of an automatically sent ACK frame. This implementation does not
+	 * use
+	 * this feature.
+	 */
+	pal_trx_irq_flag_clr_tx_end();
     19cc:	80 e4       	ldi	r24, 0x40	; 64
     19ce:	80 93 4f 01 	sts	0x014F, r24	; 0x80014f <__TEXT_REGION_LENGTH__+0x70014f>
+}
     19d2:	df 91       	pop	r29
     19d4:	cf 91       	pop	r28
     19d6:	1f 91       	pop	r17
@@ -3466,30 +5235,77 @@ void wireless_init(void)
     19e2:	08 95       	ret
 
 000019e4 <process_incoming_frame>:
+ * structure to be sent to the MAC as a parameter of tal_rx_frame_cb().
+ *
+ * \param buf Pointer to the buffer containing the received frame
+ */
+void process_incoming_frame(buffer_t *buf_ptr)
+{
     19e4:	cf 93       	push	r28
     19e6:	df 93       	push	r29
     19e8:	ac 01       	movw	r20, r24
+	uint8_t *frame_ptr;
+	uint8_t ed_level;
+	uint8_t lqi;
+#endif
+
+	frame_info_t *receive_frame
     19ea:	fc 01       	movw	r30, r24
     19ec:	c0 81       	ld	r28, Z
     19ee:	d1 81       	ldd	r29, Z+1	; 0x01
+
+	/*
+	 * Store the last frame length for IFS handling.
+	 * Substract LQI and length fields.
+	 */
+	frame_len = last_frame_length = receive_frame->mpdu[0];
     19f0:	af 81       	ldd	r26, Y+7	; 0x07
     19f2:	b8 85       	ldd	r27, Y+8	; 0x08
     19f4:	8c 91       	ld	r24, X
     19f6:	80 93 6c 05 	sts	0x056C, r24	; 0x80056c <last_frame_length>
+
+	/*
+	 * The LQI is stored after the FCS.
+	 * The ED value is stored after the LQI.
+	 */
+	frame_ptr = &(receive_frame->mpdu[frame_len + LQI_LEN]);
     19fa:	e8 2f       	mov	r30, r24
     19fc:	f0 e0       	ldi	r31, 0x00	; 0
     19fe:	31 96       	adiw	r30, 0x01	; 1
     1a00:	ea 0f       	add	r30, r26
     1a02:	fb 1f       	adc	r31, r27
+	lqi = *frame_ptr++;
     1a04:	80 81       	ld	r24, Z
+	ed_level = *frame_ptr;
     1a06:	31 81       	ldd	r19, Z+1	; 0x01
+	uint8_t lqi_star;
+
+#ifdef HIGH_DATA_RATE_SUPPORT
+	if (tal_pib.CurrentPage == 0) {
+#endif
+	if (ed_value > ED_MAX_VAL) {
     1a08:	3d 33       	cpi	r19, 0x3D	; 61
     1a0a:	20 f4       	brcc	.+8      	; 0x1a14 <process_incoming_frame+0x30>
+		ed_value = ED_MAX_VAL;
+	} else if (ed_value == 0) {
     1a0c:	31 11       	cpse	r19, r1
     1a0e:	03 c0       	rjmp	.+6      	; 0x1a16 <process_incoming_frame+0x32>
+		ed_value = 1;
     1a10:	31 e0       	ldi	r19, 0x01	; 1
     1a12:	01 c0       	rjmp	.+2      	; 0x1a16 <process_incoming_frame+0x32>
+
+#ifdef HIGH_DATA_RATE_SUPPORT
+	if (tal_pib.CurrentPage == 0) {
+#endif
+	if (ed_value > ED_MAX_VAL) {
+		ed_value = ED_MAX_VAL;
     1a14:	3c e3       	ldi	r19, 0x3C	; 60
+	} else if (ed_value == 0) {
+		ed_value = 1;
+	}
+
+	lqi_star = lqi >> 6;
+	link_quality = (uint16_t)lqi_star * (uint16_t)ed_value * 255 /
     1a16:	82 95       	swap	r24
     1a18:	86 95       	lsr	r24
     1a1a:	86 95       	lsr	r24
@@ -3515,51 +5331,145 @@ void wireless_init(void)
     1a42:	89 27       	eor	r24, r25
     1a44:	9f 70       	andi	r25, 0x0F	; 15
     1a46:	89 27       	eor	r24, r25
+			(ED_MAX_VAL * LQI_MAX);
+
+	if (link_quality > 255) {
     1a48:	8f 3f       	cpi	r24, 0xFF	; 255
     1a4a:	91 05       	cpc	r25, r1
     1a4c:	11 f0       	breq	.+4      	; 0x1a52 <process_incoming_frame+0x6e>
     1a4e:	08 f0       	brcs	.+2      	; 0x1a52 <process_incoming_frame+0x6e>
+		return 255;
     1a50:	8f ef       	ldi	r24, 0xFF	; 255
+	lqi = normalize_lqi(lqi, ed_level);
+#endif
+
+	/* Store normalized LQI value again. */
+	frame_ptr--;
+	*frame_ptr = lqi;
     1a52:	80 83       	st	Z, r24
+#endif  /* #ifndef TRX_REG_RAW_VALUE */
+
+	receive_frame->buffer_header = buf_ptr;
     1a54:	5a 83       	std	Y+2, r21	; 0x02
     1a56:	49 83       	std	Y+1, r20	; 0x01
+#ifdef ENABLE_RTB
+	/* The callback function implemented by RTB is invoked. */
+	rtb_rx_frame_cb(receive_frame);
+#else
+	/* The callback function implemented by MAC is invoked. */
+	tal_rx_frame_cb(receive_frame);
     1a58:	ce 01       	movw	r24, r28
     1a5a:	2e d6       	rcall	.+3164   	; 0x26b8 <tal_rx_frame_cb>
+#endif
+} /* process_incoming_frame() */
     1a5c:	df 91       	pop	r29
     1a5e:	cf 91       	pop	r28
     1a60:	08 95       	ret
 
 00001a62 <tal_rx_enable>:
+{
+	/*
+	 * Trx can only be enabled if TAL is not busy;
+	 * i.e. if TAL is IDLE.
+	 */
+	if (TAL_IDLE != tal_state) {
     1a62:	90 91 70 05 	lds	r25, 0x0570	; 0x800570 <tal_state>
     1a66:	91 11       	cpse	r25, r1
     1a68:	16 c0       	rjmp	.+44     	; 0x1a96 <tal_rx_enable+0x34>
+#else
+		return TAL_BUSY;
+#endif
+	}
+
+	if (state == PHY_TRX_OFF) {
     1a6a:	88 30       	cpi	r24, 0x08	; 8
     1a6c:	29 f4       	brne	.+10     	; 0x1a78 <tal_rx_enable+0x16>
+		 * that is currently being received.
+		 * This must not be a Forced TRX_OFF (CMD_FORCED_TRX_OFF) since
+		 * this could
+		 * corrupt an already outoing ACK frame.
+		 */
+		set_trx_state(CMD_TRX_OFF);
     1a6e:	16 d9       	rcall	.-3540   	; 0xc9c <set_trx_state>
+		tal_rx_on_required = false;
     1a70:	10 92 44 05 	sts	0x0544, r1	; 0x800544 <tal_rx_on_required>
+		return TRX_OFF;
     1a74:	88 e0       	ldi	r24, 0x08	; 8
     1a76:	08 95       	ret
+	} else {
+#ifdef SNIFFER
+		set_trx_state(CMD_RX_ON);
+#else   /* #ifndef SNIFFER */
+		if (NULL != tal_rx_buffer) {
     1a78:	80 91 72 04 	lds	r24, 0x0472	; 0x800472 <tal_rx_buffer>
     1a7c:	90 91 73 04 	lds	r25, 0x0473	; 0x800473 <tal_rx_buffer+0x1>
     1a80:	89 2b       	or	r24, r25
     1a82:	21 f0       	breq	.+8      	; 0x1a8c <tal_rx_enable+0x2a>
+			} else {
+				set_trx_state(CMD_RX_AACK_ON);
+			}
+
+#else   /* Normal operation */
+			set_trx_state(CMD_RX_AACK_ON);
     1a84:	86 e1       	ldi	r24, 0x16	; 22
     1a86:	0a d9       	rcall	.-3564   	; 0xc9c <set_trx_state>
+			 * receiver.
+			 */
+			tal_rx_on_required = true;
+		}
+#endif  /* #ifndef SNIFFER */
+		return RX_ON; /* MAC layer assumes RX_ON as return value */
     1a88:	86 e0       	ldi	r24, 0x06	; 6
     1a8a:	08 95       	ret
+			 * the TAL returns MAC_SUCCESS. The TAL will try to
+			 * allocate a receive
+			 * buffer as soon as possible and will switch on the
+			 * receiver.
+			 */
+			tal_rx_on_required = true;
     1a8c:	81 e0       	ldi	r24, 0x01	; 1
     1a8e:	80 93 44 05 	sts	0x0544, r24	; 0x800544 <tal_rx_on_required>
+		}
+#endif  /* #ifndef SNIFFER */
+		return RX_ON; /* MAC layer assumes RX_ON as return value */
     1a92:	86 e0       	ldi	r24, 0x06	; 6
     1a94:	08 95       	ret
+		if (tal_state != TAL_SLOTTED_CSMA) {
+			return TAL_BUSY;
+		}
+
+#else
+		return TAL_BUSY;
     1a96:	86 e8       	ldi	r24, 0x86	; 134
+			tal_rx_on_required = true;
+		}
+#endif  /* #ifndef SNIFFER */
+		return RX_ON; /* MAC layer assumes RX_ON as return value */
+	}
+}
     1a98:	08 95       	ret
 
 00001a9a <__portable_avr_delay_cycles>:
+ *
+ * @{
+ */
+__always_optimize
+static inline void __portable_avr_delay_cycles(unsigned long n)
+{
     1a9a:	04 c0       	rjmp	.+8      	; 0x1aa4 <__portable_avr_delay_cycles+0xa>
+	while (n) {
+		barrier();
+		n--;
     1a9c:	61 50       	subi	r22, 0x01	; 1
     1a9e:	71 09       	sbc	r23, r1
     1aa0:	81 09       	sbc	r24, r1
     1aa2:	91 09       	sbc	r25, r1
+ * @{
+ */
+__always_optimize
+static inline void __portable_avr_delay_cycles(unsigned long n)
+{
+	while (n) {
     1aa4:	61 15       	cp	r22, r1
     1aa6:	71 05       	cpc	r23, r1
     1aa8:	81 05       	cpc	r24, r1
@@ -3568,7 +5478,19 @@ void wireless_init(void)
     1aae:	08 95       	ret
 
 00001ab0 <tx_done_handling>:
+ *
+ * This function handles the callback for the transmission end.
+ */
+void tx_done_handling(void)
+{
+	tal_state = TAL_IDLE;
     1ab0:	10 92 70 05 	sts	0x0570, r1	; 0x800570 <tal_state>
+	mac_frame_ptr->time_stamp = pal_tx_timestamp;
+#endif  /* #if (defined BEACON_SUPPORT) || (defined ENABLE_TSTAMP) */
+
+	retval_t status;
+
+	switch (trx_trac_status) {
     1ab4:	80 91 7c 04 	lds	r24, 0x047C	; 0x80047c <trx_trac_status>
     1ab8:	83 30       	cpi	r24, 0x03	; 3
     1aba:	69 f0       	breq	.+26     	; 0x1ad6 <tx_done_handling+0x26>
@@ -3583,23 +5505,65 @@ void wireless_init(void)
     1acc:	87 30       	cpi	r24, 0x07	; 7
     1ace:	39 f0       	breq	.+14     	; 0x1ade <tx_done_handling+0x2e>
     1ad0:	08 c0       	rjmp	.+16     	; 0x1ae2 <tx_done_handling+0x32>
+	case TRAC_SUCCESS:
+		status = MAC_SUCCESS;
+		break;
+
+	case TRAC_SUCCESS_DATA_PENDING:
+		status = TAL_FRAME_PENDING;
     1ad2:	87 e8       	ldi	r24, 0x87	; 135
     1ad4:	09 c0       	rjmp	.+18     	; 0x1ae8 <tx_done_handling+0x38>
+		break;
+
+	case TRAC_CHANNEL_ACCESS_FAILURE:
+		status = MAC_CHANNEL_ACCESS_FAILURE;
     1ad6:	81 ee       	ldi	r24, 0xE1	; 225
+		break;
     1ad8:	07 c0       	rjmp	.+14     	; 0x1ae8 <tx_done_handling+0x38>
+
+	case TRAC_NO_ACK:
+		status = MAC_NO_ACK;
     1ada:	89 ee       	ldi	r24, 0xE9	; 233
+		break;
     1adc:	05 c0       	rjmp	.+10     	; 0x1ae8 <tx_done_handling+0x38>
+
+	case TRAC_INVALID:
+		status = FAILURE;
     1ade:	85 e8       	ldi	r24, 0x85	; 133
+		break;
     1ae0:	03 c0       	rjmp	.+6      	; 0x1ae8 <tx_done_handling+0x38>
+
+	default:
+		Assert("Unexpected tal_tx_state" == 0);
+		status = FAILURE;
     1ae2:	85 e8       	ldi	r24, 0x85	; 133
+		break;
     1ae4:	01 c0       	rjmp	.+2      	; 0x1ae8 <tx_done_handling+0x38>
+
+	retval_t status;
+
+	switch (trx_trac_status) {
+	case TRAC_SUCCESS:
+		status = MAC_SUCCESS;
     1ae6:	80 e0       	ldi	r24, 0x00	; 0
+
+#ifdef ENABLE_RTB
+	rtb_tx_frame_done_cb(status, mac_frame_ptr);
+#else
+	/* Regular handling without RTB */
+	tal_tx_frame_done_cb(status, mac_frame_ptr);
     1ae8:	60 91 4a 05 	lds	r22, 0x054A	; 0x80054a <mac_frame_ptr>
     1aec:	70 91 4b 05 	lds	r23, 0x054B	; 0x80054b <mac_frame_ptr+0x1>
     1af0:	e0 c5       	rjmp	.+3008   	; 0x26b2 <tal_tx_frame_done_cb>
     1af2:	08 95       	ret
 
 00001af4 <send_frame>:
+ * \param use_csma Flag indicating if CSMA is requested
+ * \param tx_retries Flag indicating if transmission retries are requested
+ *                   by the MAC layer
+ */
+void send_frame(csma_mode_t csma_mode, bool tx_retries)
+{
     1af4:	1f 93       	push	r17
     1af6:	cf 93       	push	r28
     1af8:	df 93       	push	r29
@@ -3607,8 +5571,13 @@ void wireless_init(void)
     1afc:	cd b7       	in	r28, 0x3d	; 61
     1afe:	de b7       	in	r29, 0x3e	; 62
     1b00:	18 2f       	mov	r17, r24
+	tal_trx_status_t trx_status;
+
+	/* Configure tx according to tx_retries */
+	if (tx_retries) {
     1b02:	66 23       	and	r22, r22
     1b04:	81 f0       	breq	.+32     	; 0x1b26 <send_frame+0x32>
+		trx_bit_write(SR_MAX_FRAME_RETRIES,
     1b06:	ec e6       	ldi	r30, 0x6C	; 108
     1b08:	f1 e0       	ldi	r31, 0x01	; 1
     1b0a:	20 81       	ld	r18, Z
@@ -3621,17 +5590,35 @@ void wireless_init(void)
     1b1a:	9f 70       	andi	r25, 0x0F	; 15
     1b1c:	89 2b       	or	r24, r25
     1b1e:	80 83       	st	Z, r24
+	} else {
+		trx_bit_write(SR_MAX_FRAME_RETRIES, 0);
+	}
+
+	/* Configure tx according to csma usage */
+	if ((csma_mode == NO_CSMA_NO_IFS) || (csma_mode == NO_CSMA_WITH_IFS)) {
     1b20:	12 30       	cpi	r17, 0x02	; 2
     1b22:	e0 f4       	brcc	.+56     	; 0x1b5c <send_frame+0x68>
     1b24:	08 c0       	rjmp	.+16     	; 0x1b36 <send_frame+0x42>
+	/* Configure tx according to tx_retries */
+	if (tx_retries) {
+		trx_bit_write(SR_MAX_FRAME_RETRIES,
+				tal_pib.MaxFrameRetries);
+	} else {
+		trx_bit_write(SR_MAX_FRAME_RETRIES, 0);
     1b26:	ec e6       	ldi	r30, 0x6C	; 108
     1b28:	f1 e0       	ldi	r31, 0x01	; 1
     1b2a:	80 81       	ld	r24, Z
     1b2c:	8f 70       	andi	r24, 0x0F	; 15
     1b2e:	80 83       	st	Z, r24
+	}
+
+	/* Configure tx according to csma usage */
+	if ((csma_mode == NO_CSMA_NO_IFS) || (csma_mode == NO_CSMA_WITH_IFS)) {
     1b30:	12 30       	cpi	r17, 0x02	; 2
     1b32:	a0 f4       	brcc	.+40     	; 0x1b5c <send_frame+0x68>
     1b34:	0d c0       	rjmp	.+26     	; 0x1b50 <send_frame+0x5c>
+		if (tx_retries) {
+			trx_bit_write(SR_MAX_CSMA_RETRIES,
     1b36:	ec e6       	ldi	r30, 0x6C	; 108
     1b38:	f1 e0       	ldi	r31, 0x01	; 1
     1b3a:	80 81       	ld	r24, Z
@@ -3641,14 +5628,21 @@ void wireless_init(void)
     1b44:	81 7f       	andi	r24, 0xF1	; 241
     1b46:	89 2b       	or	r24, r25
     1b48:	80 83       	st	Z, r24
+					tal_pib.MaxCSMABackoffs);
+			trx_reg_write(RG_CSMA_BE, 0x00);
     1b4a:	10 92 6f 01 	sts	0x016F, r1	; 0x80016f <__TEXT_REGION_LENGTH__+0x70016f>
     1b4e:	1a c0       	rjmp	.+52     	; 0x1b84 <send_frame+0x90>
+		} else {
+			trx_bit_write(SR_MAX_CSMA_RETRIES, 7);
     1b50:	ec e6       	ldi	r30, 0x6C	; 108
     1b52:	f1 e0       	ldi	r31, 0x01	; 1
     1b54:	80 81       	ld	r24, Z
     1b56:	8e 60       	ori	r24, 0x0E	; 14
     1b58:	80 83       	st	Z, r24
     1b5a:	14 c0       	rjmp	.+40     	; 0x1b84 <send_frame+0x90>
+		}
+	} else {
+		trx_reg_write(RG_CSMA_BE,
     1b5c:	ec e4       	ldi	r30, 0x4C	; 76
     1b5e:	f5 e0       	ldi	r31, 0x05	; 5
     1b60:	83 8d       	ldd	r24, Z+27	; 0x1b
@@ -3659,6 +5653,8 @@ void wireless_init(void)
     1b6a:	95 89       	ldd	r25, Z+21	; 0x15
     1b6c:	89 2b       	or	r24, r25
     1b6e:	80 93 6f 01 	sts	0x016F, r24	; 0x80016f <__TEXT_REGION_LENGTH__+0x70016f>
+				((tal_pib.MaxBE << 4) | tal_pib.MinBE));
+		trx_bit_write(SR_MAX_CSMA_RETRIES, tal_pib.MaxCSMABackoffs);
     1b72:	ac e6       	ldi	r26, 0x6C	; 108
     1b74:	b1 e0       	ldi	r27, 0x01	; 1
     1b76:	8c 91       	ld	r24, X
@@ -3668,48 +5664,96 @@ void wireless_init(void)
     1b7e:	81 7f       	andi	r24, 0xF1	; 241
     1b80:	89 2b       	or	r24, r25
     1b82:	8c 93       	st	X, r24
+	}
+
+	do {
+		trx_status = set_trx_state(CMD_TX_ARET_ON);
     1b84:	89 e1       	ldi	r24, 0x19	; 25
     1b86:	8a d8       	rcall	.-3820   	; 0xc9c <set_trx_state>
+	} while (trx_status != TX_ARET_ON);
     1b88:	89 31       	cpi	r24, 0x19	; 25
     1b8a:	e1 f7       	brne	.-8      	; 0x1b84 <send_frame+0x90>
+
+	/* Handle interframe spacing */
+	if (csma_mode == NO_CSMA_WITH_IFS) {
     1b8c:	11 30       	cpi	r17, 0x01	; 1
     1b8e:	a1 f4       	brne	.+40     	; 0x1bb8 <send_frame+0xc4>
+		if (last_frame_length > aMaxSIFSFrameSize) {
     1b90:	80 91 6c 05 	lds	r24, 0x056C	; 0x80056c <last_frame_length>
     1b94:	83 31       	cpi	r24, 0x13	; 19
     1b96:	40 f0       	brcs	.+16     	; 0x1ba8 <send_frame+0xb4>
+			pal_timer_delay(TAL_CONVERT_SYMBOLS_TO_US(
     1b98:	61 e0       	ldi	r22, 0x01	; 1
     1b9a:	73 e0       	ldi	r23, 0x03	; 3
     1b9c:	80 e0       	ldi	r24, 0x00	; 0
     1b9e:	90 e0       	ldi	r25, 0x00	; 0
     1ba0:	7c df       	rcall	.-264    	; 0x1a9a <__portable_avr_delay_cycles>
+					macMinLIFSPeriod_def)
+					- IRQ_PROCESSING_DLY_US -
+					PRE_TX_DURATION_US);
+			last_frame_length = 0;
     1ba2:	10 92 6c 05 	sts	0x056C, r1	; 0x80056c <last_frame_length>
     1ba6:	0d c0       	rjmp	.+26     	; 0x1bc2 <send_frame+0xce>
+		} else {
+			pal_timer_delay(TAL_CONVERT_SYMBOLS_TO_US(
     1ba8:	6b ea       	ldi	r22, 0xAB	; 171
     1baa:	70 e0       	ldi	r23, 0x00	; 0
     1bac:	80 e0       	ldi	r24, 0x00	; 0
     1bae:	90 e0       	ldi	r25, 0x00	; 0
     1bb0:	74 df       	rcall	.-280    	; 0x1a9a <__portable_avr_delay_cycles>
+					macMinSIFSPeriod_def)
+					- IRQ_PROCESSING_DLY_US -
+					PRE_TX_DURATION_US);
+			last_frame_length = 0;
     1bb2:	10 92 6c 05 	sts	0x056C, r1	; 0x80056c <last_frame_length>
     1bb6:	05 c0       	rjmp	.+10     	; 0x1bc2 <send_frame+0xce>
+		 * If no delay is applied after switching to TX_ARET_ON,
+		 * a short delay is required that allows that a pending TX_END
+		 * IRQ for
+		 * ACK transmission gets served.
+		 */
+		pal_timer_delay(TRX_IRQ_DELAY_US);
     1bb8:	6c e0       	ldi	r22, 0x0C	; 12
     1bba:	70 e0       	ldi	r23, 0x00	; 0
     1bbc:	80 e0       	ldi	r24, 0x00	; 0
     1bbe:	90 e0       	ldi	r25, 0x00	; 0
     1bc0:	6c df       	rcall	.-296    	; 0x1a9a <__portable_avr_delay_cycles>
+
+typedef uint8_t irqflags_t;
+
+static inline irqflags_t cpu_irq_save(void)
+{
+	volatile irqflags_t flags = SREG;
     1bc2:	8f b7       	in	r24, 0x3f	; 63
     1bc4:	89 83       	std	Y+1, r24	; 0x01
+	cpu_irq_disable();
     1bc6:	f8 94       	cli
+	return flags;
     1bc8:	19 81       	ldd	r17, Y+1	; 0x01
+	}
+
+	ENTER_CRITICAL_REGION(); /* prevent from buffer underrun */
+
+	/* Toggle the SLP_TR pin triggering transmission. */
+	TRX_SLP_TR_HIGH();
     1bca:	e9 e3       	ldi	r30, 0x39	; 57
     1bcc:	f1 e0       	ldi	r31, 0x01	; 1
     1bce:	80 81       	ld	r24, Z
     1bd0:	82 60       	ori	r24, 0x02	; 2
     1bd2:	80 83       	st	Z, r24
+	PAL_WAIT_65_NS();
     1bd4:	00 00       	nop
     1bd6:	00 00       	nop
+	TRX_SLP_TR_LOW();
     1bd8:	80 81       	ld	r24, Z
     1bda:	8d 7f       	andi	r24, 0xFD	; 253
     1bdc:	80 83       	st	Z, r24
+	 * is
+	 * 1 octet frame length octet
+	 * + n octets frame (i.e. value of frame_tx[0])
+	 * - 2 octets FCS
+	 */
+	trx_frame_write(tal_frame_to_tx, tal_frame_to_tx[0] - 1);
     1bde:	60 91 6d 05 	lds	r22, 0x056D	; 0x80056d <tal_frame_to_tx>
     1be2:	70 91 6e 05 	lds	r23, 0x056E	; 0x80056e <tal_frame_to_tx+0x1>
     1be6:	fb 01       	movw	r30, r22
@@ -3720,9 +5764,20 @@ void wireless_init(void)
     1bf0:	80 e8       	ldi	r24, 0x80	; 128
     1bf2:	91 e0       	ldi	r25, 0x01	; 1
     1bf4:	31 d6       	rcall	.+3170   	; 0x2858 <memcpy>
+
+	tal_state = TAL_TX_AUTO;
     1bf6:	81 e0       	ldi	r24, 0x01	; 1
     1bf8:	80 93 70 05 	sts	0x0570, r24	; 0x800570 <tal_state>
+}
+
+static inline void cpu_irq_restore(irqflags_t flags)
+{
+	barrier();
+	SREG = flags;
     1bfc:	1f bf       	out	0x3f, r17	; 63
+
+	LEAVE_CRITICAL_REGION();
+}
     1bfe:	0f 90       	pop	r0
     1c00:	df 91       	pop	r29
     1c02:	cf 91       	pop	r28
@@ -3730,138 +5785,320 @@ void wireless_init(void)
     1c06:	08 95       	ret
 
 00001c08 <tal_tx_frame>:
+ *                 transmission
+ *         TAL_BUSY if the TAL is busy servicing the previous MAC request
+ */
+retval_t tal_tx_frame(frame_info_t *tx_frame, csma_mode_t csma_mode,
+		bool perform_frame_retry)
+{
     1c08:	fc 01       	movw	r30, r24
+	if (tal_state != TAL_IDLE) {
     1c0a:	90 91 70 05 	lds	r25, 0x0570	; 0x800570 <tal_state>
     1c0e:	91 11       	cpse	r25, r1
     1c10:	16 c0       	rjmp	.+44     	; 0x1c3e <tal_tx_frame+0x36>
+
+	/*
+	 * Store the pointer to the provided frame structure.
+	 * This is needed for the callback function.
+	 */
+	mac_frame_ptr = tx_frame;
     1c12:	f0 93 4b 05 	sts	0x054B, r31	; 0x80054b <mac_frame_ptr+0x1>
     1c16:	e0 93 4a 05 	sts	0x054A, r30	; 0x80054a <mac_frame_ptr>
+
+	/* Set pointer to actual mpdu to be downloaded to the transceiver. */
+	tal_frame_to_tx = tx_frame->mpdu;
     1c1a:	07 80       	ldd	r0, Z+7	; 0x07
     1c1c:	f0 85       	ldd	r31, Z+8	; 0x08
     1c1e:	e0 2d       	mov	r30, r0
     1c20:	f0 93 6e 05 	sts	0x056E, r31	; 0x80056e <tal_frame_to_tx+0x1>
     1c24:	e0 93 6d 05 	sts	0x056D, r30	; 0x80056d <tal_frame_to_tx>
+	last_frame_length = tal_frame_to_tx[0] - 1;
     1c28:	80 81       	ld	r24, Z
     1c2a:	81 50       	subi	r24, 0x01	; 1
     1c2c:	80 93 6c 05 	sts	0x056C, r24	; 0x80056c <last_frame_length>
+
+	/*
+	 * In case the frame is too large, return immediately indicating
+	 * invalid status.
+	 */
+	if (tal_frame_to_tx == NULL) {
     1c30:	ef 2b       	or	r30, r31
     1c32:	39 f0       	breq	.+14     	; 0x1c42 <tal_tx_frame+0x3a>
     1c34:	86 2f       	mov	r24, r22
+#endif  /* #if (MAC_INDIRECT_DATA_FFD == 1) */
+		send_frame(csma_mode, perform_frame_retry);
+	}
+
+#else   /* No BEACON_SUPPORT */
+	send_frame(csma_mode, perform_frame_retry);
     1c36:	64 2f       	mov	r22, r20
     1c38:	5d df       	rcall	.-326    	; 0x1af4 <send_frame>
+#endif  /* BEACON_SUPPORT / No BEACON_SUPPORT */
+
+	return MAC_SUCCESS;
     1c3a:	80 e0       	ldi	r24, 0x00	; 0
     1c3c:	08 95       	ret
+ */
+retval_t tal_tx_frame(frame_info_t *tx_frame, csma_mode_t csma_mode,
+		bool perform_frame_retry)
+{
+	if (tal_state != TAL_IDLE) {
+		return TAL_BUSY;
     1c3e:	86 e8       	ldi	r24, 0x86	; 134
     1c40:	08 95       	ret
+	/*
+	 * In case the frame is too large, return immediately indicating
+	 * invalid status.
+	 */
+	if (tal_frame_to_tx == NULL) {
+		return MAC_INVALID_PARAMETER;
     1c42:	88 ee       	ldi	r24, 0xE8	; 232
+#else   /* No BEACON_SUPPORT */
+	send_frame(csma_mode, perform_frame_retry);
+#endif  /* BEACON_SUPPORT / No BEACON_SUPPORT */
+
+	return MAC_SUCCESS;
+}
     1c44:	08 95       	ret
 
 00001c46 <handle_tx_end_irq>:
+	/* Check if TX_END interrupt, is issued due to automatic ACK
+	 * transmission. */
+#if ((MAC_START_REQUEST_CONFIRM == 1) && (defined BEACON_SUPPORT))
+	if ((tal_state != TAL_TX_AUTO) && (!tal_beacon_transmission))
+#else
+	if (tal_state != TAL_TX_AUTO)
     1c46:	80 91 70 05 	lds	r24, 0x0570	; 0x800570 <tal_state>
     1c4a:	81 30       	cpi	r24, 0x01	; 1
     1c4c:	c1 f4       	brne	.+48     	; 0x1c7e <handle_tx_end_irq+0x38>
+		}
+	} else
+#endif /* ((MAC_START_REQUEST_CONFIRM == 1) && (defined BEACON_SUPPORT)) */
+	{
+		/* Read trac status before enabling RX_AACK_ON. */
+		trx_trac_status = (trx_trac_status_t)trx_bit_read(
     1c4e:	80 91 42 01 	lds	r24, 0x0142	; 0x800142 <__TEXT_REGION_LENGTH__+0x700142>
     1c52:	82 95       	swap	r24
     1c54:	86 95       	lsr	r24
     1c56:	87 70       	andi	r24, 0x07	; 7
     1c58:	80 93 7c 04 	sts	0x047C, r24	; 0x80047c <trx_trac_status>
+			PIN_ACK_WAITING_END();
+		} else
+#endif  /* BEACON_SUPPORT */
+		/* Trx has handled the entire transmission incl. CSMA */
+		{
+			tal_state = TAL_TX_DONE; /* Further handling is done by
     1c5c:	82 e0       	ldi	r24, 0x02	; 2
     1c5e:	80 93 70 05 	sts	0x0570, r24	; 0x800570 <tal_state>
+
+	/*
+	 * After transmission has finished, switch receiver on again.
+	 * Check if receive buffer is available.
+	 */
+	if (NULL == tal_rx_buffer) {
     1c62:	80 91 72 04 	lds	r24, 0x0472	; 0x800472 <tal_rx_buffer>
     1c66:	90 91 73 04 	lds	r25, 0x0473	; 0x800473 <tal_rx_buffer+0x1>
     1c6a:	89 2b       	or	r24, r25
     1c6c:	31 f4       	brne	.+12     	; 0x1c7a <handle_tx_end_irq+0x34>
+		set_trx_state(CMD_PLL_ON);
     1c6e:	89 e0       	ldi	r24, 0x09	; 9
     1c70:	15 d8       	rcall	.-4054   	; 0xc9c <set_trx_state>
+		tal_rx_on_required = true;
     1c72:	81 e0       	ldi	r24, 0x01	; 1
     1c74:	80 93 44 05 	sts	0x0544, r24	; 0x800544 <tal_rx_on_required>
     1c78:	08 95       	ret
+	} else {
+		set_trx_state(CMD_RX_AACK_ON);
     1c7a:	86 e1       	ldi	r24, 0x16	; 22
     1c7c:	0f c8       	rjmp	.-4066   	; 0xc9c <set_trx_state>
     1c7e:	08 95       	ret
 
 00001c80 <tal_ant_div_config>:
+ */
+#if ((TAL_TYPE != AT86RF230B) && (TAL_TYPE != AT86RF212))
+retval_t  tal_ant_div_config(bool div_ctrl, uint8_t ant_ctrl)
+{
+	retval_t return_var = FAILURE;
+	if (true == div_ctrl) {
     1c80:	88 23       	and	r24, r24
     1c82:	29 f1       	breq	.+74     	; 0x1cce <tal_ant_div_config+0x4e>
+		/* do the configurations if diversity has to be enabled */
+		trx_bit_write(SR_ANT_CTRL, ANT_CTRL_0);
     1c84:	ed e4       	ldi	r30, 0x4D	; 77
     1c86:	f1 e0       	ldi	r31, 0x01	; 1
     1c88:	80 81       	ld	r24, Z
     1c8a:	8c 7f       	andi	r24, 0xFC	; 252
     1c8c:	80 83       	st	Z, r24
+		trx_bit_write(SR_ANT_DIV_EN, ANT_DIV_ENABLE);
     1c8e:	80 81       	ld	r24, Z
     1c90:	88 60       	ori	r24, 0x08	; 8
     1c92:	80 83       	st	Z, r24
+
+#if ((TAL_TYPE != AT86RF212) && (TAL_TYPE != AT86RF212B))
+		trx_bit_write(SR_PDT_THRES, THRES_ANT_DIV_ENABLE);
     1c94:	aa e4       	ldi	r26, 0x4A	; 74
     1c96:	b1 e0       	ldi	r27, 0x01	; 1
     1c98:	8c 91       	ld	r24, X
     1c9a:	80 7f       	andi	r24, 0xF0	; 240
     1c9c:	83 60       	ori	r24, 0x03	; 3
     1c9e:	8c 93       	st	X, r24
+#endif /* End of ((TAL_TYPE != AT86RF212) && (TAL_TYPE!= AT86RF212B)) */
+		trx_bit_write(SR_ANT_EXT_SW_EN, ANT_EXT_SW_ENABLE);
     1ca0:	80 81       	ld	r24, Z
     1ca2:	84 60       	ori	r24, 0x04	; 4
     1ca4:	80 83       	st	Z, r24
+#if (TAL_TYPE == ATMEGARFA1)
+		CONF_REG_WRITE();
+#endif /* TAL_TYPE == ATMEGA128RFA1 */
+
+		/* check the values written in transceiver registers */
+		if ((trx_bit_read(SR_ANT_CTRL) == ANT_CTRL_0) &&
     1ca6:	80 81       	ld	r24, Z
     1ca8:	83 70       	andi	r24, 0x03	; 3
     1caa:	09 f0       	breq	.+2      	; 0x1cae <tal_ant_div_config+0x2e>
     1cac:	54 c0       	rjmp	.+168    	; 0x1d56 <tal_ant_div_config+0xd6>
+				(trx_bit_read(SR_ANT_DIV_EN) ==
     1cae:	80 91 4d 01 	lds	r24, 0x014D	; 0x80014d <__TEXT_REGION_LENGTH__+0x70014d>
+#if (TAL_TYPE == ATMEGARFA1)
+		CONF_REG_WRITE();
+#endif /* TAL_TYPE == ATMEGA128RFA1 */
+
+		/* check the values written in transceiver registers */
+		if ((trx_bit_read(SR_ANT_CTRL) == ANT_CTRL_0) &&
     1cb2:	83 ff       	sbrs	r24, 3
     1cb4:	52 c0       	rjmp	.+164    	; 0x1d5a <tal_ant_div_config+0xda>
+				(trx_bit_read(SR_ANT_DIV_EN) ==
+				ANT_DIV_ENABLE) && \
+				(trx_bit_read(SR_ANT_EXT_SW_EN) ==
     1cb6:	80 91 4d 01 	lds	r24, 0x014D	; 0x80014d <__TEXT_REGION_LENGTH__+0x70014d>
+#endif /* TAL_TYPE == ATMEGA128RFA1 */
+
+		/* check the values written in transceiver registers */
+		if ((trx_bit_read(SR_ANT_CTRL) == ANT_CTRL_0) &&
+				(trx_bit_read(SR_ANT_DIV_EN) ==
+				ANT_DIV_ENABLE) && \
     1cba:	82 ff       	sbrs	r24, 2
     1cbc:	50 c0       	rjmp	.+160    	; 0x1d5e <tal_ant_div_config+0xde>
+				(trx_bit_read(SR_ANT_EXT_SW_EN) ==
+				ANT_EXT_SW_ENABLE)) {
+#if ((TAL_TYPE != AT86RF212) && (TAL_TYPE != AT86RF212B))
+			if ((trx_bit_read(SR_PDT_THRES) ==
     1cbe:	80 91 4a 01 	lds	r24, 0x014A	; 0x80014a <__TEXT_REGION_LENGTH__+0x70014a>
     1cc2:	8f 70       	andi	r24, 0x0F	; 15
     1cc4:	83 30       	cpi	r24, 0x03	; 3
     1cc6:	09 f0       	breq	.+2      	; 0x1cca <tal_ant_div_config+0x4a>
     1cc8:	4c c0       	rjmp	.+152    	; 0x1d62 <tal_ant_div_config+0xe2>
+					THRES_ANT_DIV_ENABLE))
+#endif
+			return_var = MAC_SUCCESS;
     1cca:	80 e0       	ldi	r24, 0x00	; 0
     1ccc:	08 95       	ret
+		} else {
+			return_var = FAILURE;
+		}
+	} else {
+		/* do the configurations if diversity has to be disabled */
+		trx_bit_write(SR_ANT_DIV_EN, ANT_DIV_DISABLE);
     1cce:	ed e4       	ldi	r30, 0x4D	; 77
     1cd0:	f1 e0       	ldi	r31, 0x01	; 1
     1cd2:	80 81       	ld	r24, Z
     1cd4:	87 7f       	andi	r24, 0xF7	; 247
     1cd6:	80 83       	st	Z, r24
+#if ((TAL_TYPE != AT86RF212) && (TAL_TYPE != AT86RF212B))
+		trx_bit_write(SR_PDT_THRES, THRES_ANT_DIV_DISABLE);
     1cd8:	aa e4       	ldi	r26, 0x4A	; 74
     1cda:	b1 e0       	ldi	r27, 0x01	; 1
     1cdc:	8c 91       	ld	r24, X
     1cde:	80 7f       	andi	r24, 0xF0	; 240
     1ce0:	87 60       	ori	r24, 0x07	; 7
     1ce2:	8c 93       	st	X, r24
+#endif
+
+		trx_bit_write(SR_ANT_EXT_SW_EN, ANT_EXT_SW_ENABLE);
     1ce4:	80 81       	ld	r24, Z
     1ce6:	84 60       	ori	r24, 0x04	; 4
     1ce8:	80 83       	st	Z, r24
+		if (ant_ctrl == ANT_CTRL_1) {
     1cea:	61 30       	cpi	r22, 0x01	; 1
     1cec:	31 f4       	brne	.+12     	; 0x1cfa <tal_ant_div_config+0x7a>
+			/* Enable A1/X2 */
+			trx_bit_write(SR_ANT_CTRL, ANT_CTRL_1);
     1cee:	80 81       	ld	r24, Z
     1cf0:	8c 7f       	andi	r24, 0xFC	; 252
     1cf2:	81 60       	ori	r24, 0x01	; 1
     1cf4:	80 83       	st	Z, r24
+ * \return The value set in the TX_PWR bits
+ */
+#if ((TAL_TYPE != AT86RF230B) && (TAL_TYPE != AT86RF212))
+retval_t  tal_ant_div_config(bool div_ctrl, uint8_t ant_ctrl)
+{
+	retval_t return_var = FAILURE;
     1cf6:	85 e8       	ldi	r24, 0x85	; 133
     1cf8:	17 c0       	rjmp	.+46     	; 0x1d28 <tal_ant_div_config+0xa8>
+
+		trx_bit_write(SR_ANT_EXT_SW_EN, ANT_EXT_SW_ENABLE);
+		if (ant_ctrl == ANT_CTRL_1) {
+			/* Enable A1/X2 */
+			trx_bit_write(SR_ANT_CTRL, ANT_CTRL_1);
+		} else if (ant_ctrl == ANT_CTRL_2) {
     1cfa:	62 30       	cpi	r22, 0x02	; 2
     1cfc:	41 f4       	brne	.+16     	; 0x1d0e <tal_ant_div_config+0x8e>
+			/* Enable A2/X3 */
+			trx_bit_write(SR_ANT_CTRL, ANT_CTRL_2);
     1cfe:	ed e4       	ldi	r30, 0x4D	; 77
     1d00:	f1 e0       	ldi	r31, 0x01	; 1
     1d02:	80 81       	ld	r24, Z
     1d04:	8c 7f       	andi	r24, 0xFC	; 252
     1d06:	82 60       	ori	r24, 0x02	; 2
     1d08:	80 83       	st	Z, r24
+ * \return The value set in the TX_PWR bits
+ */
+#if ((TAL_TYPE != AT86RF230B) && (TAL_TYPE != AT86RF212))
+retval_t  tal_ant_div_config(bool div_ctrl, uint8_t ant_ctrl)
+{
+	retval_t return_var = FAILURE;
     1d0a:	85 e8       	ldi	r24, 0x85	; 133
     1d0c:	0d c0       	rjmp	.+26     	; 0x1d28 <tal_ant_div_config+0xa8>
+			/* Enable A1/X2 */
+			trx_bit_write(SR_ANT_CTRL, ANT_CTRL_1);
+		} else if (ant_ctrl == ANT_CTRL_2) {
+			/* Enable A2/X3 */
+			trx_bit_write(SR_ANT_CTRL, ANT_CTRL_2);
+		} else if (ant_ctrl == ANT_CTRL_0 || ant_ctrl == ANT_CTRL_3) {
     1d0e:	66 23       	and	r22, r22
     1d10:	11 f0       	breq	.+4      	; 0x1d16 <tal_ant_div_config+0x96>
     1d12:	63 30       	cpi	r22, 0x03	; 3
     1d14:	41 f4       	brne	.+16     	; 0x1d26 <tal_ant_div_config+0xa6>
+			trx_bit_write(SR_ANT_CTRL, ANT_CTRL_0);
     1d16:	ed e4       	ldi	r30, 0x4D	; 77
     1d18:	f1 e0       	ldi	r31, 0x01	; 1
     1d1a:	80 81       	ld	r24, Z
     1d1c:	8c 7f       	andi	r24, 0xFC	; 252
     1d1e:	80 83       	st	Z, r24
+ * \return The value set in the TX_PWR bits
+ */
+#if ((TAL_TYPE != AT86RF230B) && (TAL_TYPE != AT86RF212))
+retval_t  tal_ant_div_config(bool div_ctrl, uint8_t ant_ctrl)
+{
+	retval_t return_var = FAILURE;
     1d20:	85 e8       	ldi	r24, 0x85	; 133
+		} else if (ant_ctrl == ANT_CTRL_2) {
+			/* Enable A2/X3 */
+			trx_bit_write(SR_ANT_CTRL, ANT_CTRL_2);
+		} else if (ant_ctrl == ANT_CTRL_0 || ant_ctrl == ANT_CTRL_3) {
+			trx_bit_write(SR_ANT_CTRL, ANT_CTRL_0);
+			ant_ctrl = 0;
     1d22:	60 e0       	ldi	r22, 0x00	; 0
     1d24:	01 c0       	rjmp	.+2      	; 0x1d28 <tal_ant_div_config+0xa8>
+		} else {
+			return_var = MAC_INVALID_PARAMETER;
     1d26:	88 ee       	ldi	r24, 0xE8	; 232
+
+#if (TAL_TYPE == ATMEGARFA1)
+		CONF_REG_WRITE();
+#endif /* TAL_TYPE == ATMEGA128RFA1 */
+		/* check the values written in transceiver registers */
+		if ((trx_bit_read(SR_ANT_CTRL) == ant_ctrl) &&
     1d28:	20 91 4d 01 	lds	r18, 0x014D	; 0x80014d <__TEXT_REGION_LENGTH__+0x70014d>
     1d2c:	23 70       	andi	r18, 0x03	; 3
     1d2e:	30 e0       	ldi	r19, 0x00	; 0
@@ -3869,51 +6106,139 @@ void wireless_init(void)
     1d32:	26 17       	cp	r18, r22
     1d34:	37 07       	cpc	r19, r23
     1d36:	b9 f4       	brne	.+46     	; 0x1d66 <tal_ant_div_config+0xe6>
+				(trx_bit_read(SR_ANT_DIV_EN) ==
     1d38:	90 91 4d 01 	lds	r25, 0x014D	; 0x80014d <__TEXT_REGION_LENGTH__+0x70014d>
+
+#if (TAL_TYPE == ATMEGARFA1)
+		CONF_REG_WRITE();
+#endif /* TAL_TYPE == ATMEGA128RFA1 */
+		/* check the values written in transceiver registers */
+		if ((trx_bit_read(SR_ANT_CTRL) == ant_ctrl) &&
     1d3c:	93 fd       	sbrc	r25, 3
     1d3e:	15 c0       	rjmp	.+42     	; 0x1d6a <tal_ant_div_config+0xea>
+				(trx_bit_read(SR_ANT_DIV_EN) ==
+				ANT_DIV_DISABLE) && \
+				(trx_bit_read(SR_ANT_EXT_SW_EN) ==
     1d40:	90 91 4d 01 	lds	r25, 0x014D	; 0x80014d <__TEXT_REGION_LENGTH__+0x70014d>
+		CONF_REG_WRITE();
+#endif /* TAL_TYPE == ATMEGA128RFA1 */
+		/* check the values written in transceiver registers */
+		if ((trx_bit_read(SR_ANT_CTRL) == ant_ctrl) &&
+				(trx_bit_read(SR_ANT_DIV_EN) ==
+				ANT_DIV_DISABLE) && \
     1d44:	92 fd       	sbrc	r25, 2
     1d46:	13 c0       	rjmp	.+38     	; 0x1d6e <tal_ant_div_config+0xee>
+				(trx_bit_read(SR_ANT_EXT_SW_EN) ==
+				ANT_EXT_SW_DISABLE)) {
+#if ((TAL_TYPE != AT86RF212) && (TAL_TYPE != AT86RF212B))
+			if ((trx_bit_read(SR_PDT_THRES) ==
     1d48:	90 91 4a 01 	lds	r25, 0x014A	; 0x80014a <__TEXT_REGION_LENGTH__+0x70014a>
     1d4c:	9f 70       	andi	r25, 0x0F	; 15
     1d4e:	93 30       	cpi	r25, 0x03	; 3
     1d50:	79 f4       	brne	.+30     	; 0x1d70 <tal_ant_div_config+0xf0>
+					THRES_ANT_DIV_ENABLE))
+#endif
+			return_var = MAC_SUCCESS;
     1d52:	80 e0       	ldi	r24, 0x00	; 0
     1d54:	08 95       	ret
+			if ((trx_bit_read(SR_PDT_THRES) ==
+					THRES_ANT_DIV_ENABLE))
+#endif
+			return_var = MAC_SUCCESS;
+		} else {
+			return_var = FAILURE;
     1d56:	85 e8       	ldi	r24, 0x85	; 133
     1d58:	08 95       	ret
     1d5a:	85 e8       	ldi	r24, 0x85	; 133
     1d5c:	08 95       	ret
     1d5e:	85 e8       	ldi	r24, 0x85	; 133
     1d60:	08 95       	ret
+ * \return The value set in the TX_PWR bits
+ */
+#if ((TAL_TYPE != AT86RF230B) && (TAL_TYPE != AT86RF212))
+retval_t  tal_ant_div_config(bool div_ctrl, uint8_t ant_ctrl)
+{
+	retval_t return_var = FAILURE;
     1d62:	85 e8       	ldi	r24, 0x85	; 133
     1d64:	08 95       	ret
+			if ((trx_bit_read(SR_PDT_THRES) ==
+					THRES_ANT_DIV_ENABLE))
+#endif
+			return_var = MAC_SUCCESS;
+		} else {
+			return_var = FAILURE;
     1d66:	85 e8       	ldi	r24, 0x85	; 133
     1d68:	08 95       	ret
     1d6a:	85 e8       	ldi	r24, 0x85	; 133
     1d6c:	08 95       	ret
     1d6e:	85 e8       	ldi	r24, 0x85	; 133
+		}
+	}
+
+	return return_var;
+}
     1d70:	08 95       	ret
 
 00001d72 <tfa_pib_set>:
+ *         TAL_BUSY if the TAL is not in TAL_IDLE state.
+ *         MAC_SUCCESS if the attempt to set the PIB attribute was successful
+ */
+retval_t tfa_pib_set(tfa_pib_t tfa_pib_attribute, void *value)
+{
+	switch (tfa_pib_attribute) {
     1d72:	81 11       	cpse	r24, r1
     1d74:	24 c0       	rjmp	.+72     	; 0x1dbe <tfa_pib_set+0x4c>
+	case TFA_PIB_RX_SENS:
+	{
+		uint8_t reg_val;
+
+		tfa_pib_rx_sens = *((int8_t *)value);
     1d76:	fb 01       	movw	r30, r22
     1d78:	80 81       	ld	r24, Z
+		if (tfa_pib_rx_sens > -49) {
     1d7a:	80 3d       	cpi	r24, 0xD0	; 208
     1d7c:	2c f0       	brlt	.+10     	; 0x1d88 <tfa_pib_set+0x16>
+			reg_val = 0xF;
+			tfa_pib_rx_sens = -49;
     1d7e:	8f ec       	ldi	r24, 0xCF	; 207
     1d80:	80 93 7d 04 	sts	0x047D, r24	; 0x80047d <tfa_pib_rx_sens>
+	{
+		uint8_t reg_val;
+
+		tfa_pib_rx_sens = *((int8_t *)value);
+		if (tfa_pib_rx_sens > -49) {
+			reg_val = 0xF;
     1d84:	6f e0       	ldi	r22, 0x0F	; 15
     1d86:	12 c0       	rjmp	.+36     	; 0x1dac <tfa_pib_set+0x3a>
+			tfa_pib_rx_sens = -49;
+		} else if (tfa_pib_rx_sens <= RSSI_BASE_VAL_DBM) {
     1d88:	87 3a       	cpi	r24, 0xA7	; 167
     1d8a:	2c f4       	brge	.+10     	; 0x1d96 <tfa_pib_set+0x24>
+			reg_val = 0x0;
+			tfa_pib_rx_sens = RSSI_BASE_VAL_DBM;
     1d8c:	86 ea       	ldi	r24, 0xA6	; 166
     1d8e:	80 93 7d 04 	sts	0x047D, r24	; 0x80047d <tfa_pib_rx_sens>
+		tfa_pib_rx_sens = *((int8_t *)value);
+		if (tfa_pib_rx_sens > -49) {
+			reg_val = 0xF;
+			tfa_pib_rx_sens = -49;
+		} else if (tfa_pib_rx_sens <= RSSI_BASE_VAL_DBM) {
+			reg_val = 0x0;
     1d92:	60 e0       	ldi	r22, 0x00	; 0
     1d94:	0b c0       	rjmp	.+22     	; 0x1dac <tfa_pib_set+0x3a>
+	switch (tfa_pib_attribute) {
+	case TFA_PIB_RX_SENS:
+	{
+		uint8_t reg_val;
+
+		tfa_pib_rx_sens = *((int8_t *)value);
     1d96:	80 93 7d 04 	sts	0x047D, r24	; 0x80047d <tfa_pib_rx_sens>
+		} else if (tfa_pib_rx_sens <= RSSI_BASE_VAL_DBM) {
+			reg_val = 0x0;
+			tfa_pib_rx_sens = RSSI_BASE_VAL_DBM;
+		} else {
+			reg_val
+				= ((tfa_pib_rx_sens -
     1d9a:	08 2e       	mov	r0, r24
     1d9c:	00 0c       	add	r0, r0
     1d9e:	99 0b       	sbc	r25, r25
@@ -3923,6 +6248,10 @@ void wireless_init(void)
     1da6:	70 e0       	ldi	r23, 0x00	; 0
     1da8:	b6 d4       	rcall	.+2412   	; 0x2716 <__divmodhi4>
     1daa:	6f 5f       	subi	r22, 0xFF	; 255
+					(RSSI_BASE_VAL_DBM)) / 3) + 1;
+		}
+
+		trx_bit_write(SR_RX_PDT_LEVEL, reg_val);
     1dac:	e5 e5       	ldi	r30, 0x55	; 85
     1dae:	f1 e0       	ldi	r31, 0x01	; 1
     1db0:	80 81       	ld	r24, Z
@@ -3930,24 +6259,66 @@ void wireless_init(void)
     1db4:	6f 70       	andi	r22, 0x0F	; 15
     1db6:	68 2b       	or	r22, r24
     1db8:	60 83       	st	Z, r22
+	default:
+		/* Invalid attribute id */
+		return MAC_UNSUPPORTED_ATTRIBUTE;
+	}
+
+	return MAC_SUCCESS;
     1dba:	80 e0       	ldi	r24, 0x00	; 0
     1dbc:	08 95       	ret
+	}
+	break;
+
+	default:
+		/* Invalid attribute id */
+		return MAC_UNSUPPORTED_ATTRIBUTE;
     1dbe:	84 ef       	ldi	r24, 0xF4	; 244
+	}
+
+	return MAC_SUCCESS;
+}
     1dc0:	08 95       	ret
 
 00001dc2 <tfa_init>:
+ * to their default values.
+ * \ingroup group_tfa
+ */
+static void init_tfa_pib(void)
+{
+	tfa_pib_rx_sens = TFA_PIB_RX_SENS_DEF;
     1dc2:	86 ea       	ldi	r24, 0xA6	; 166
     1dc4:	80 93 7d 04 	sts	0x047D, r24	; 0x80047d <tfa_pib_rx_sens>
+ * It is assumed that the radio does not sleep.
+ * \ingroup group_tfa
+ */
+static void write_all_tfa_pibs_to_trx(void)
+{
+	tfa_pib_set(TFA_PIB_RX_SENS, (void *)&tfa_pib_rx_sens);
     1dc8:	6d e7       	ldi	r22, 0x7D	; 125
     1dca:	74 e0       	ldi	r23, 0x04	; 4
     1dcc:	80 e0       	ldi	r24, 0x00	; 0
     1dce:	d1 df       	rcall	.-94     	; 0x1d72 <tfa_pib_set>
+		Assert(false);
+	}
+
+#if !MEGA_XX_UN0 && !MEGA_XX_UN1
+	else if (module == &ADC) {
+		sysclk_enable_module(POWER_RED_REG0, PRADC_bm);
     1dd0:	61 e0       	ldi	r22, 0x01	; 1
     1dd2:	80 e0       	ldi	r24, 0x00	; 0
     1dd4:	0e 94 67 03 	call	0x6ce	; 0x6ce <sysclk_enable_module>
+#if MEGA_RF
+		sysclk_enable_module(POWER_RED_REG0, PRPGA_bm);
     1dd8:	60 e1       	ldi	r22, 0x10	; 16
     1dda:	80 e0       	ldi	r24, 0x00	; 0
     1ddc:	0e 94 67 03 	call	0x6ce	; 0x6ce <sysclk_enable_module>
+{
+	init_tfa_pib();
+	write_all_tfa_pibs_to_trx();
+	sysclk_enable_peripheral_clock(&ADC);
+	return MAC_SUCCESS;
+}
     1de0:	80 e0       	ldi	r24, 0x00	; 0
     1de2:	08 95       	ret
 
@@ -5334,10 +7705,10 @@ void tal_rx_frame_cb(frame_info_t *frame)
 00002842 <srand>:
     2842:	a0 e0       	ldi	r26, 0x00	; 0
     2844:	b0 e0       	ldi	r27, 0x00	; 0
-    2846:	80 93 00 02 	sts	0x0200, r24	; 0x800200 <__data_start>
-    284a:	90 93 01 02 	sts	0x0201, r25	; 0x800201 <__data_start+0x1>
-    284e:	a0 93 02 02 	sts	0x0202, r26	; 0x800202 <__data_start+0x2>
-    2852:	b0 93 03 02 	sts	0x0203, r27	; 0x800203 <__data_start+0x3>
+    2846:	80 93 00 02 	sts	0x0200, r24	; 0x800200 <__DATA_REGION_ORIGIN__>
+    284a:	90 93 01 02 	sts	0x0201, r25	; 0x800201 <__DATA_REGION_ORIGIN__+0x1>
+    284e:	a0 93 02 02 	sts	0x0202, r26	; 0x800202 <__DATA_REGION_ORIGIN__+0x2>
+    2852:	b0 93 03 02 	sts	0x0203, r27	; 0x800203 <__DATA_REGION_ORIGIN__+0x3>
     2856:	08 95       	ret
 
 00002858 <memcpy>:

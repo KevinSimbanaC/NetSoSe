@@ -946,7 +946,7 @@ Discarded input sections
  .debug_macro   0x00000000      0x14c src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_ed.o
  .debug_macro   0x00000000       0x22 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_ed.o
  .debug_line    0x00000000      0x88a src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_ed.o
- .debug_str     0x00000000    0x1b59e src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_ed.o
+ .debug_str     0x00000000    0x1b5a0 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_ed.o
  .comment       0x00000000       0x31 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_ed.o
  .group         0x00000000        0x8 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_init.o
  .group         0x00000000        0x8 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_init.o
@@ -1377,7 +1377,7 @@ Discarded input sections
  .debug_macro   0x00000000       0x82 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_pwr_mgmt.o
  .debug_macro   0x00000000      0x14c src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_pwr_mgmt.o
  .debug_line    0x00000000      0x923 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_pwr_mgmt.o
- .debug_str     0x00000000    0x1b8ec src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_pwr_mgmt.o
+ .debug_str     0x00000000    0x1b8ee src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_pwr_mgmt.o
  .comment       0x00000000       0x31 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_pwr_mgmt.o
  .debug_frame   0x00000000       0x34 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_pwr_mgmt.o
  .group         0x00000000        0x8 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_rx.o
@@ -3526,50 +3526,50 @@ END GROUP
  .debug_frame   0x00001678       0x50 src/main.o
  .debug_frame   0x000016c8       0xc8 ../src/ASF/thirdparty/wireless/services/common_hw_timer/mega/lib\libmegarfr2_lib_hw_timer.a(common_hw_timer.o)
 
-.debug_str      0x00000000    0x1effd
+.debug_str      0x00000000    0x1efe7
  *(.debug_str)
  .debug_str     0x00000000      0x7f7 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/ATmega_DFP/1.3.300/gcc/dev/atmega256rfr2/avr6/crtatmega256rfr2.o
- .debug_str     0x000007f7    0x1b2f1 src/usr_wireless.o
-                              0x1b5b1 (size before relaxing)
- .debug_str     0x0001bae8      0x3c2 src/Wireless/wireless_api.o
-                              0x1b885 (size before relaxing)
- .debug_str     0x0001beaa       0x69 src/ASF/common/boards/user_board/init.o
-                              0x16e9c (size before relaxing)
- .debug_str     0x0001bf13       0xce src/ASF/common/services/clock/mega/sysclk.o
+ .debug_str     0x000007f7    0x1b2db src/usr_wireless.o
+                              0x1b59b (size before relaxing)
+ .debug_str     0x0001bad2      0x3c2 src/Wireless/wireless_api.o
+                              0x1b86f (size before relaxing)
+ .debug_str     0x0001be94       0x38 src/ASF/common/boards/user_board/init.o
+                              0x16e9e (size before relaxing)
+ .debug_str     0x0001becc       0xff src/ASF/common/services/clock/mega/sysclk.o
                               0x16a34 (size before relaxing)
- .debug_str     0x0001bfe1      0x577 src/ASF/thirdparty/wireless/avr2025_mac/source/pal/common_sw_timer/common_sw_timer.o
+ .debug_str     0x0001bfcb      0x577 src/ASF/thirdparty/wireless/avr2025_mac/source/pal/common_sw_timer/common_sw_timer.o
                               0x16d64 (size before relaxing)
- .debug_str     0x0001c558      0x14d src/ASF/thirdparty/wireless/avr2025_mac/source/pal/pal.o
-                              0x17b11 (size before relaxing)
- .debug_str     0x0001c6a5      0x25a src/ASF/thirdparty/wireless/avr2025_mac/source/resources/buffer/src/bmm.o
-                              0x1acfd (size before relaxing)
- .debug_str     0x0001c8ff      0x10e src/ASF/thirdparty/wireless/avr2025_mac/source/resources/queue/src/qmm.o
-                              0x1a7a2 (size before relaxing)
- .debug_str     0x0001ca0d      0xe1e src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal.o
-                              0x1bc03 (size before relaxing)
- .debug_str     0x0001d82b      0x32e src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_init.o
-                              0x1c02c (size before relaxing)
- .debug_str     0x0001db59      0x33f src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_irq_handler.o
-                              0x1b933 (size before relaxing)
- .debug_str     0x0001de98      0x15f src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_pib.o
-                              0x1bcf3 (size before relaxing)
- .debug_str     0x0001dff7      0x17a src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_rx.o
-                              0x1bb46 (size before relaxing)
- .debug_str     0x0001e171       0x55 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_rx_enable.o
-                              0x1bafb (size before relaxing)
- .debug_str     0x0001e1c6       0xc3 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_tx.o
-                              0x1bfaa (size before relaxing)
- .debug_str     0x0001e289      0x2c8 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/src/tal_helper.o
-                              0x1bc2d (size before relaxing)
- .debug_str     0x0001e551      0x24c src/ASF/thirdparty/wireless/avr2025_mac/source/tfa/atmegarfr2/src/tfa.o
-                              0x1bffb (size before relaxing)
- .debug_str     0x0001e79d      0x414 src/ASF/thirdparty/wireless/services/common_hw_timer/mega/hw_timer.o
+ .debug_str     0x0001c542      0x14d src/ASF/thirdparty/wireless/avr2025_mac/source/pal/pal.o
+                              0x17b13 (size before relaxing)
+ .debug_str     0x0001c68f      0x25a src/ASF/thirdparty/wireless/avr2025_mac/source/resources/buffer/src/bmm.o
+                              0x1acff (size before relaxing)
+ .debug_str     0x0001c8e9      0x10e src/ASF/thirdparty/wireless/avr2025_mac/source/resources/queue/src/qmm.o
+                              0x1a7a4 (size before relaxing)
+ .debug_str     0x0001c9f7      0xe1e src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal.o
+                              0x1bc05 (size before relaxing)
+ .debug_str     0x0001d815      0x32e src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_init.o
+                              0x1c02e (size before relaxing)
+ .debug_str     0x0001db43      0x33f src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_irq_handler.o
+                              0x1b935 (size before relaxing)
+ .debug_str     0x0001de82      0x15f src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_pib.o
+                              0x1bcf5 (size before relaxing)
+ .debug_str     0x0001dfe1      0x17a src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_rx.o
+                              0x1bb48 (size before relaxing)
+ .debug_str     0x0001e15b       0x55 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_rx_enable.o
+                              0x1bafd (size before relaxing)
+ .debug_str     0x0001e1b0       0xc3 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/atmegarfr2/src/tal_tx.o
+                              0x1bfac (size before relaxing)
+ .debug_str     0x0001e273      0x2c8 src/ASF/thirdparty/wireless/avr2025_mac/source/tal/src/tal_helper.o
+                              0x1bc2f (size before relaxing)
+ .debug_str     0x0001e53b      0x24c src/ASF/thirdparty/wireless/avr2025_mac/source/tfa/atmegarfr2/src/tfa.o
+                              0x1bffd (size before relaxing)
+ .debug_str     0x0001e787      0x414 src/ASF/thirdparty/wireless/services/common_hw_timer/mega/hw_timer.o
                               0x16e8b (size before relaxing)
- .debug_str     0x0001ebb1      0x2f1 src/ASF/thirdparty/wireless/services/mega/drivers/tc/tc_megarf.o
+ .debug_str     0x0001eb9b      0x2f1 src/ASF/thirdparty/wireless/services/mega/drivers/tc/tc_megarf.o
                               0x16da1 (size before relaxing)
- .debug_str     0x0001eea2       0x20 src/main.o
-                              0x1b3cc (size before relaxing)
- .debug_str     0x0001eec2      0x13b ../src/ASF/thirdparty/wireless/services/common_hw_timer/mega/lib\libmegarfr2_lib_hw_timer.a(common_hw_timer.o)
+ .debug_str     0x0001ee8c       0x20 src/main.o
+                              0x1b3b6 (size before relaxing)
+ .debug_str     0x0001eeac      0x13b ../src/ASF/thirdparty/wireless/services/common_hw_timer/mega/lib\libmegarfr2_lib_hw_timer.a(common_hw_timer.o)
                                 0x2a0 (size before relaxing)
 
 .debug_loc      0x00000000     0x6172
