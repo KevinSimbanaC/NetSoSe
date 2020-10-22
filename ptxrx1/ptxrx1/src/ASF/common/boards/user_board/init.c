@@ -57,12 +57,12 @@ void board_init(void)
 	 */
 	//Se inicializa los puertos del led 
 	
-	//ioport_configure_pin(LED1R, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
+	ioport_configure_pin(LED1R, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
 	ioport_configure_pin(LED2G, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
 	ioport_configure_pin(LED3Y, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
 	
 	//Se inicializa los puertos del switch
-	ioport_configure_pin(GPIO_PUSH_BUTTON_0, IOPORT_DIR_OUTPUT | IOPORT_PULL_UP);
+	ioport_configure_pin(GPIO_PUSH_BUTTON_0, IOPORT_DIR_INPUT | IOPORT_PULL_UP);
 	
 }
 

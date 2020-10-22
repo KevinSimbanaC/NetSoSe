@@ -2,10 +2,10 @@
 #include "usr_wireless.h"
 #include "wireless_config.h"
 
-bool coordinador=true;
-
-char* A="Hola";
-char* B="Pepe";
+bool coordinador = true;
+//bool primera = false;
+char* A = "Hola";
+char* B = "Pepe";
 
 trama_tx trama_rx;
 
@@ -19,19 +19,23 @@ void usr_wireless_app_task(void)
 	// The following code demonstrates transmission of a sample packet frame every 1 second.
 
 	#ifdef TRANSMITTER_ENABLED	
-	delay_ms(1000);
-	if(! ioport_get_pin_level(GPIO_PUSH_BUTTON_0)){
+	
+	if(! ioport_get_pin_level(GPIO_PUSH_BUTTON_0) ){
 		//retardo para conocer la presion del boton
-		
+		delay_ms(200);
 		if (coordinador)
 		{
 			//ENCENDER_LED(LED2G);
+			//ENCENDER_LED(LED1R);
+			ENCENDER_LED(LED3Y);
 			// This code block will be called only if the transmission is enabled.
 			transmit_sample_frame((uint8_t*)A, strlen(A));	
 			delay_ms(1000);
+			//primera=true;
 		
 		}
 	}
+	
 	#endif
 
 	/* Examples : */
@@ -61,10 +65,10 @@ void usr_frame_received_cb(frame_info_t *frame)
 			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
 			bmm_buffer_free(frame->buffer_header);
 			
-			if(trama_rx.add_origen==0xAA03){
+			if(trama_rx.add_origen==0xAA02){
 				char *payload=trama_rx.carga;
 				//memcpy(&payload,trama_rx.carga,11);
-				transmit_sample_frame((uint8_t*)payload,20);
+				transmit_sample_frame((uint8_t*)payload,4);
 			}
 			
 		}		
@@ -80,5 +84,10 @@ void usr_frame_transmitted_cb(retval_t status, frame_info_t *frame)
 	//TODO (Project Wizard) - Add application tasks when the frame is transmitted
 
 	/* Toggle an LED in user-interface */
-	ENCENDER_LED(LED2G);
+	//ENCENDER_LED(LED2G);
+	/*if(! ioport_get_pin_level(GPIO_PUSH_BUTTON_0)){
+		//delay_ms(200);
+		COMMUTAR_LED(LED2G);
+	}*/
+	
 }
