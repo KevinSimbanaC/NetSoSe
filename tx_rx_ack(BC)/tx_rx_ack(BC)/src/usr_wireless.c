@@ -62,9 +62,9 @@ char *mensajetx = "Test enviado";
 char *mensajerx ;
 
 
-int cont1 =0;
+int cont = 0;
 trama trama_rx;
-bool fintx =false;
+bool fintx = false;
 
 
 
@@ -76,22 +76,22 @@ void usr_wireless_app_task(void)
 	// TODO (Project Wizard) - Add application tasks here.
 	// This function will be called repeatedly from main.c. (Refer to function app_task(), WirelessTask() in main.c)
 	// The following code demonstrates transmission of a sample packet frame every 1 second.
-	int cont =0;
+
 	#ifdef TRANSMITTER_ENABLED		
 		// This code block will be called only if the transmission is enabled.
 		if (coord)
 		{
-			prender(LEDR);
-			cambiar(LEDA);
-			if( cont<5)
+			prender(LEDA);
+			if(cont<5)
 			{
-				//prender(LED0);
+				prender(LEDV);
 				transmit_sample_frame((uint8_t*)mensajetx,strlen(mensajetx));
-				delay_ms(5000);
+				delay_ms(20000);
 				cont ++;
 			}
-			//apagar(LED1);
-			fintx = true;
+			apagar(LEDV);
+			delay_ms(10000);
+			cambiar(LEDR);
 		}
 	#endif
 	/* Examples : */
@@ -124,7 +124,7 @@ void usr_frame_received_cb(frame_info_t *frame)
 			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
 			bmm_buffer_free(frame->buffer_header);
 			mensajerx = trama_rx.carga;
-			if (cont1<5)
+			if (cont<5)
 			{
 				transmit_sample_frame((uint8_t*)mensajerx,12);
 				//prender(LED1);
@@ -145,11 +145,5 @@ void usr_frame_transmitted_cb(retval_t status, frame_info_t *frame)
 
 	/* Toggle an LED in user-interface */
 	/* led_toggle(); */
-	//cambiar(LED0);
-	while (fintx == false)
-	{
-		cambiar(LEDV);
-	}
-	//apagar(LEDV);
-	//cambiar(LEDR);
+
 }
