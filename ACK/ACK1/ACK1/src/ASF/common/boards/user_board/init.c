@@ -56,14 +56,6 @@ void board_init(void)
 	 * specific board configuration, found in conf_board.h.
 	 */
 	
-	//Inicializacion de los LEDs
-	ioport_configure_pin(LEDR, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
-	ioport_configure_pin(LEDV, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
-	ioport_configure_pin(LEDA, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
-	
-	//Inicializacion del boton
-	ioport_configure_pin(GPIO_PUSH_BUTTON_0,IOPORT_DIR_INPUT | IOPORT_PULL_UP);
-	
 }
 
 /**

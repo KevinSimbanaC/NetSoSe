@@ -40,36 +40,17 @@
  * \asf_license_stop
  */
 
-#include <asf.h>
-#include <board.h>
+#ifndef USER_BOARD_H
+#define USER_BOARD_H
 
-
-
-
-/**
- * \brief Initializes the board components
- */
-void board_init(void)
-{
-	/* This function is meant to contain board-specific initialization code
-	 * for, e.g., the I/O pins. The initialization can rely on application-
-	 * specific board configuration, found in conf_board.h.
-	 */
-	
-	//Inicializacion de los LEDs
-	ioport_configure_pin(LEDR, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
-	ioport_configure_pin(LEDV, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
-	ioport_configure_pin(LEDA, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
-	
-	//Inicializacion del boton
-	ioport_configure_pin(GPIO_PUSH_BUTTON_0,IOPORT_DIR_INPUT | IOPORT_PULL_UP);
-	
-}
+#include <conf_board.h>
 
 /**
  * \brief Initializes the modules added by the Project Wizard
  */
-void modules_init(void)
-{
-	
-}
+
+void modules_init(void);
+
+
+
+#endif // USER_BOARD_H

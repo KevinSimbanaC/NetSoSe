@@ -1,9 +1,9 @@
 /**
  * \file *********************************************************************
  *
- * \brief User Board Initialization
+ * \brief Common Software Timer configuration
  *
- * Copyright (c) 2014 Atmel Corporation. All rights reserved.
+ * Copyright (c) 2013 Atmel Corporation. All rights reserved.
  *
  * \asf_license_start
  *
@@ -40,36 +40,16 @@
  * \asf_license_stop
  */
 
-#include <asf.h>
-#include <board.h>
+#ifndef CONF_COMMON_SW_TIMER_H_INCLUDED
+#define CONF_COMMON_SW_TIMER_H_INCLUDED
 
-
-
-
-/**
- * \brief Initializes the board components
+/*! \name Configuration
  */
-void board_init(void)
-{
-	/* This function is meant to contain board-specific initialization code
-	 * for, e.g., the I/O pins. The initialization can rely on application-
-	 * specific board configuration, found in conf_board.h.
-	 */
-	
-	//Inicializacion de los LEDs
-	ioport_configure_pin(LEDR, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
-	ioport_configure_pin(LEDV, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
-	ioport_configure_pin(LEDA, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
-	
-	//Inicializacion del boton
-	ioport_configure_pin(GPIO_PUSH_BUTTON_0,IOPORT_DIR_INPUT | IOPORT_PULL_UP);
-	
-}
+/* ! @{ */
+#define TOTAL_NUMBER_OF_TIMERS     (5)
 
-/**
- * \brief Initializes the modules added by the Project Wizard
- */
-void modules_init(void)
-{
-	
-}
+#define TOTAL_NUMBER_OF_SW_TIMERS  TOTAL_NUMBER_OF_TIMERS
+/* ! @} */
+
+#endif /* CONF_COMMON_SW_TIMER_H_INCLUDED */
+
