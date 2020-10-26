@@ -3,7 +3,7 @@
 #include "wireless_config.h"
 
 bool coordinador = true;
-//bool primera = false;
+bool primera = false;
 char* A = "Hola";
 char* B = "Pepe";
 
@@ -20,7 +20,7 @@ void usr_wireless_app_task(void)
 
 	#ifdef TRANSMITTER_ENABLED	
 	
-	if(! ioport_get_pin_level(GPIO_PUSH_BUTTON_0) ){
+	if((!ioport_get_pin_level(GPIO_PUSH_BUTTON_0)) || primera ){
 		//retardo para conocer la presion del boton
 		delay_ms(200);
 		if (coordinador)
@@ -31,7 +31,7 @@ void usr_wireless_app_task(void)
 			// This code block will be called only if the transmission is enabled.
 			transmit_sample_frame((uint8_t*)A, strlen(A));	
 			delay_ms(1000);
-			//primera=true;
+			primera=true;
 		
 		}
 	}
@@ -64,12 +64,12 @@ void usr_frame_received_cb(frame_info_t *frame)
 			memset(&trama_rx,0,sizeof(trama_rx));
 			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
 			bmm_buffer_free(frame->buffer_header);
-			
-			if(trama_rx.add_origen==0xAA02){
+			//COMMUTAR_LED()
+			//if(trama_rx.add_origen==0xAA02){
 				char *payload=trama_rx.carga;
 				//memcpy(&payload,trama_rx.carga,11);
-				transmit_sample_frame((uint8_t*)payload,4);
-			}
+				transmit_sample_frame((uint8_t*)B,4);
+			//}
 			
 		}		
 }
