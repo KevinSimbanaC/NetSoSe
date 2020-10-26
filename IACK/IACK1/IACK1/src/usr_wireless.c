@@ -52,6 +52,13 @@
 #include "usr_wireless.h"
 #include "wireless_config.h"
 
+char* A = "0x0001";
+char* B = "0x0002";
+char* C = "0x0003";
+
+bool coordinador = false;
+
+trama trama_rx;
 
 /**
 * \brief This function needs to be edited by the user for adding application tasks
@@ -63,21 +70,17 @@ void usr_wireless_app_task(void)
 	// The following code demonstrates transmission of a sample packet frame every 1 second.
 
 	#ifdef TRANSMITTER_ENABLED		
-		// This code block will be called only if the transmission is enabled.
-		transmit_sample_frame((uint8_t*)"Hello World!", 12);	
-		delay_ms(1000);
+		if(!ioport_get_pin_level(GPIO_PUSH_BUTTON_0)){
+			if(coordinador){
+				// This code block will be called only if the transmission is enabled.
+				//COMMUTAR_LED(LED2G);
+				transmit_sample_frame((uint8_t*)A, strlen(A));
+					
+				delay_ms(1000);
+			}
+		}
+		
 	#endif
-
-	/* Examples : */
-
-	/* Toggle an LED in when frame is received */
-    /* led_toggle(); */
-
-    /* Check for button press */
-    /* if( button_pressed() )
-    {
-        // Add application specific code here
-    } */
 }
 
 /**
@@ -87,9 +90,18 @@ void usr_wireless_app_task(void)
 void usr_frame_received_cb(frame_info_t *frame)
 {
 		//TODO (Project Wizard) - Add application task when the frame is received
-
-		/* Toggle an LED in when frame is received */
 		/* led_toggle(); */
+	if (!coordinador)
+	{
+		memset(&trama_rx,0,sizeof(trama_rx));
+		memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
+		bmm_buffer_free(frame->buffer_header);
+		
+		if(trama_rx.add_origen==0x0001){	
+			//COMMUTAR_LED(LED1R);			
+			transmit_sample_frame((uint8_t*)B,strlen(B));
+		}
+	}
 }
 
 /**
