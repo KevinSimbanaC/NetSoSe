@@ -16,7 +16,7 @@
 #define LEDA IOPORT_CREATE_PIN(PORTE, 2)
 
 #define GPIO_PUSH_BUTTON_0 IOPORT_CREATE_PIN(PORTE, 0)
-#define GPIO_PUSH_BUTTON_ON_BOARD GPIO_PUSH_BUTTON_0
+//#define GPIO_PUSH_BUTTON_ON_BOARD GPIO_PUSH_BUTTON_0
 
 #define apagar(led_gpio) ioport_set_pin_level(led_gpio, 1)
 #define prender(led_gpio) ioport_set_pin_level(led_gpio, 0)
