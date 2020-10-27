@@ -51,11 +51,12 @@
 
 #include "usr_wireless.h"
 #include "wireless_config.h"
+#define MAX 114
 
-bool coord = true;
+bool coord = false;
 int cont = 0;
-char* mensajetx = "Hola";
-char* mensajerx;
+char mensajetx[MAX];
+char mensajerx[MAX];
 
 trama trama_rx;
 /**
@@ -66,14 +67,19 @@ void usr_wireless_app_task(void)
 	// TODO (Project Wizard) - Add application tasks here.
 	// This function will be called repeatedly from main.c. (Refer to function app_task(), WirelessTask() in main.c)
 	// The following code demonstrates transmission of a sample packet frame every 1 second.
-
+	
 	#ifdef TRANSMITTER_ENABLED		
 		// This code block will be called only if the transmission is enabled.
+		memset(&mensajetx,0,sizeof(mensajetx));
 		if (coord)
 		{
 			if( cont<3)
 			{
-				transmit_sample_frame((uint8_t*)mensajetx,strlen(mensajetx));
+				for (int i=0;i<MAX;i++)
+				{
+					mensajetx[i]='a';
+				}
+				transmit_sample_frame((uint8_t*)mensajetx,MAX);
 				delay_ms(50);
 				cont ++;
 			}
@@ -104,11 +110,16 @@ void usr_frame_received_cb(frame_info_t *frame)
 		/* led_toggle(); */
 		if (!coord)
 		{
+			memset(&mensajerx,0,sizeof(mensajerx));
 			memset(&trama_rx,0,sizeof(trama_rx));
 			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
 			bmm_buffer_free(frame->buffer_header);
-			mensajerx = trama_rx.carga;
-			transmit_sample_frame((uint8_t*)mensajerx,4);
+			//mensajerx = trama_rx.carga;
+			for (int i=0;i<MAX;i++)
+			{
+				mensajerx[i]='b';
+			}
+			transmit_sample_frame((uint8_t*)mensajerx,MAX);
 		}
 }
 
