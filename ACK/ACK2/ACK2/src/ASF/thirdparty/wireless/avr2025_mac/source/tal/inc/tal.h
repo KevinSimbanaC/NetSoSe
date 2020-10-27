@@ -535,7 +535,7 @@ typedef struct tal_pib_tag {
 	/**
 	 * Adapt data rate of the incoming frame to use for ACK transmission
 	 */
-	bool AdaptDataRateForACK;
+	bool AdaptDataRateFor;
 #endif
 #ifdef SUPPORT_FRAME_FILTER_CONFIGURATION
 

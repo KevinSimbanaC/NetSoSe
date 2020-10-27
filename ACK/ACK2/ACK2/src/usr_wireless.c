@@ -52,6 +52,13 @@
 #include "usr_wireless.h"
 #include "wireless_config.h"
 
+bool coord = false;
+int cont = 0;
+char* mensajetx="Test";
+char* mensajerx;
+
+trama trama_rx;
+trama trama_rx1;
 
 /**
 * \brief This function needs to be edited by the user for adding application tasks
@@ -64,8 +71,15 @@ void usr_wireless_app_task(void)
 
 	#ifdef TRANSMITTER_ENABLED		
 		// This code block will be called only if the transmission is enabled.
-		transmit_sample_frame((uint8_t*)"Hello World!", 12);	
-		delay_ms(1000);
+		if (coord)
+		{
+			if( cont<2)
+			{
+				transmit_sample_frame((uint8_t*)mensajetx,4);
+				delay_ms(50);
+				cont ++;
+			}
+		}
 	#endif
 
 	/* Examples : */
@@ -90,7 +104,25 @@ void usr_frame_received_cb(frame_info_t *frame)
 
 		/* Toggle an LED in when frame is received */
 		/* led_toggle(); */
-}
+		if (!coord)
+		{
+			memset(&mensajerx,0,sizeof(mensajerx));
+			memset(&trama_rx,0,sizeof(trama_rx));
+			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
+			bmm_buffer_free(frame->buffer_header);
+			mensajerx = trama_rx.carga;
+			if(trama_rx.add_origen == 0x0001){
+				prender(LEDA);
+				transmit_sample_frame((uint8_t*)mensajerx,4);
+				
+			}
+			
+		}
+		if (coord)
+		{
+			prender(LEDR);
+		}
+}	
 
 /**
 * \brief This function needs to be edited by the user for adding  tasks when a frame is transmitted
