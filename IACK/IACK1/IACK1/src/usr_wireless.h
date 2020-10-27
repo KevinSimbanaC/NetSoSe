@@ -54,7 +54,7 @@
 
 #include "wireless_api.h"
 
-#define maximo 101
+#define maximo 114
 
 typedef struct
 {
