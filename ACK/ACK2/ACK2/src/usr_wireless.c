@@ -55,10 +55,9 @@
 bool coord = false;
 int cont = 0;
 char* mensajetx="Test";
-char* mensajerx;
-
+char* mensaje="HOLA";
 trama trama_rx;
-trama trama_rx1;
+
 
 /**
 * \brief This function needs to be edited by the user for adding application tasks
@@ -73,10 +72,11 @@ void usr_wireless_app_task(void)
 		// This code block will be called only if the transmission is enabled.
 		if (coord)
 		{
-			if( cont<2)
+			if( cont<5)
 			{
+				cambiar(LEDV);
 				transmit_sample_frame((uint8_t*)mensajetx,4);
-				delay_ms(50);
+				delay_ms(2000);
 				cont ++;
 			}
 		}
@@ -106,22 +106,33 @@ void usr_frame_received_cb(frame_info_t *frame)
 		/* led_toggle(); */
 		if (!coord)
 		{
-			memset(&mensajerx,0,sizeof(mensajerx));
 			memset(&trama_rx,0,sizeof(trama_rx));
 			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
 			bmm_buffer_free(frame->buffer_header);
-			mensajerx = trama_rx.carga;
+			cambiar(LEDA);
 			if(trama_rx.add_origen == 0x0001){
-				prender(LEDA);
-				transmit_sample_frame((uint8_t*)mensajerx,4);
-				
+				delay_ms(2000);
+				cambiar(LEDV);
+				if(FCF_GET_FRAMETYPE(trama_rx.FCF & FCF_FRAMETYPE_MASK) == 0x01){
+					cambiar(LEDR);
+					transmit_sample_frame((uint8_t*)mensaje,4);
+				}
 			}
 			
 		}
-		if (coord)
+		/*if (coord)
 		{
-			prender(LEDR);
-		}
+			delay_ms(5000);
+			cambiar(LEDR);
+			memset(&trama_rx1,0,sizeof(trama_rx1));
+			memcpy(&trama_rx1,frame->mpdu,sizeof(trama_rx1));
+			bmm_buffer_free(frame->buffer_header);
+			if(trama_rx1.add_origen == 0002 ){
+				delay_ms(5000);
+				cambiar(LEDA);
+				transmit_sample_frame((uint8_t*)mensaje,4);
+			}*/
+		//}
 }	
 
 /**
