@@ -52,7 +52,11 @@
 #include "usr_wireless.h"
 #include "wireless_config.h"
 
-
+bool coordinador = true;
+char *message = "Hola";
+char *message2 = "h0la";
+trama trama_rx;
+bool comparador = false;
 /**
 * \brief This function needs to be edited by the user for adding application tasks
 */
@@ -63,21 +67,17 @@ void usr_wireless_app_task(void)
 	// The following code demonstrates transmission of a sample packet frame every 1 second.
 
 	#ifdef TRANSMITTER_ENABLED		
-		// This code block will be called only if the transmission is enabled.
-		transmit_sample_frame((uint8_t*)"Hello World!", 12);	
-		delay_ms(1000);
+		if(!ioport_get_pin_level(GPIO_PUSH_BUTTON_0)){
+			if(coordinador){
+				// This code block will be called only if the transmission is enabled.
+				transmit_sample_frame((uint8_t*)message,strlen(message));
+				delay_ms(1000);
+			}
+		}
+		
 	#endif
 
-	/* Examples : */
-
-	/* Toggle an LED in when frame is received */
-    /* led_toggle(); */
-
-    /* Check for button press */
-    /* if( button_pressed() )
-    {
-        // Add application specific code here
-    } */
+	
 }
 
 /**
@@ -87,9 +87,33 @@ void usr_wireless_app_task(void)
 void usr_frame_received_cb(frame_info_t *frame)
 {
 		//TODO (Project Wizard) - Add application task when the frame is received
-
-		/* Toggle an LED in when frame is received */
-		/* led_toggle(); */
+		//Lo que responde el nodo 2
+		if (!coordinador)
+		{
+			memset(&trama_rx,0,sizeof(trama_rx));
+			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
+			bmm_buffer_free(frame->buffer_header);
+			char *payload=trama_rx.carga;
+			transmit_sample_frame((uint8_t*)payload,strlen(message));
+			
+		}
+		if(coordinador){
+			//Lo que responde el nodo1
+			comparador = true;
+			memset(&trama_rx,0,sizeof(trama_rx));
+			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
+			bmm_buffer_free(frame->buffer_header);
+			char *payload=trama_rx.carga;
+			
+			for(int i = 0; i<strlen(message);i++){
+				if(payload[i] != message[i]){
+					comparador = false;
+					break;
+				}
+			}
+			COMMUTAR_LED(LED1R);
+		}
+		
 }
 
 /**
@@ -99,8 +123,8 @@ void usr_frame_received_cb(frame_info_t *frame)
 */
 void usr_frame_transmitted_cb(retval_t status, frame_info_t *frame)
 {
-	//TODO (Project Wizard) - Add application tasks when the frame is transmitted
-
-	/* Toggle an LED in user-interface */
-	/* led_toggle(); */
+	if(comparador){
+		transmit_sample_frame((uint8_t*)message2,strlen(message2));
+		comparador = false;
+	}
 }
