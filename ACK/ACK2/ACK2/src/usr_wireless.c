@@ -52,13 +52,18 @@
 #include "usr_wireless.h"
 #include "wireless_config.h"
 
-bool coord = false;
+bool coord = true;
+bool envio = false;
 int cont = 0;
-char* mensajetx="Test";
+uint16_t secuencia = 0;
+
+char* mensajetx="test";
+char* mensaje="hola";
 char* mensajerx;
 
 trama trama_rx;
-trama trama_rx1;
+trama trama_tx;
+
 
 /**
 * \brief This function needs to be edited by the user for adding application tasks
@@ -73,10 +78,11 @@ void usr_wireless_app_task(void)
 		// This code block will be called only if the transmission is enabled.
 		if (coord)
 		{
-			if( cont<2)
+			if( cont<1)
 			{
+				cambiar(LEDA);
 				transmit_sample_frame((uint8_t*)mensajetx,4);
-				delay_ms(50);
+				delay_ms(5000);
 				cont ++;
 			}
 		}
@@ -104,23 +110,35 @@ void usr_frame_received_cb(frame_info_t *frame)
 
 		/* Toggle an LED in when frame is received */
 		/* led_toggle(); */
-		if (!coord)
+		/*if (!coord)
 		{
-			memset(&mensajerx,0,sizeof(mensajerx));
 			memset(&trama_rx,0,sizeof(trama_rx));
 			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
 			bmm_buffer_free(frame->buffer_header);
 			mensajerx = trama_rx.carga;
+			cambiar(LEDA);
+			delay_ms(2000);
 			if(trama_rx.add_origen == 0x0001){
-				prender(LEDA);
-				transmit_sample_frame((uint8_t*)mensajerx,4);
-				
+				if(FCF_GET_FRAMETYPE(trama_rx.FCF & FCF_FRAMETYPE_MASK) == 0x01){
+					cambiar(LEDR);
+					delay_ms(2000);
+					envio = true;
+					transmit_sample_frame((uint8_t*)mensaje,4);
+				}
 			}
 			
-		}
+		}*/
 		if (coord)
 		{
-			prender(LEDR);
+			//memset(&trama_rx,0,sizeof(trama_rx));
+			//memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
+			//bmm_buffer_free(frame->buffer_header);
+			//if(FCF_GET_FRAMETYPE(trama_rx.FCF & FCF_FRAMETYPE_MASK) == 0x02){
+				delay_ms(5000);
+			cambiar(LEDV);
+			delay_ms(5000);
+			cambiar(LEDV);
+			envio = true;
 		}
 }	
 
@@ -135,4 +153,15 @@ void usr_frame_transmitted_cb(retval_t status, frame_info_t *frame)
 
 	/* Toggle an LED in user-interface */
 	/* led_toggle(); */
+		memset(&trama_tx,0,sizeof(trama_tx));
+		memcpy(&trama_tx,frame->mpdu,sizeof(trama_tx));
+		bmm_buffer_free(frame->buffer_header);
+		secuencia = trama_tx.nSec;
+		cambiar(LEDR);
+		if(FCF_GET_FRAMETYPE(trama_rx.FCF & FCF_FRAMETYPE_MASK) == 0x01){
+			//cambiar(LEDR);
+			delay_ms(1000);
+			//envio = false;
+			//transmit_sample_frame((uint8_t*)mensajerx,4);
+		}
 }
