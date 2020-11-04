@@ -55,7 +55,9 @@ void board_init(void)
 	 * for, e.g., the I/O pins. The initialization can rely on application-
 	 * specific board configuration, found in conf_board.h.
 	 */
-	
+	ioport_configure_pin(LEDR, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
+	ioport_configure_pin(LEDV, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
+	ioport_configure_pin(LEDA, IOPORT_DIR_OUTPUT | IOPORT_INIT_HIGH);
 }
 
 /**
