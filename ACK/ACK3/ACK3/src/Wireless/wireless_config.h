@@ -58,16 +58,16 @@
 
 #define DEFAULT_PAN_ID          0xCAFE
 
-#define SRC_ADDR				0x0001
+#define SRC_ADDR				0x0002
 #define SRC_PAN_ID              0xCAFE
 
 #define CHANNEL_TRANSMIT_RECEIVE		18
 #define CHANNEL_PAGE_TRANSMIT_RECEIVE	0
 
-#define DST_ADDR		0x0002
+#define DST_ADDR		0x0001
 #define DST_PAN_ID      0xCAFE
-#define ACK_REQ			1
-#define FRAME_RETRY		1
+#define ACK_REQ			0
+#define FRAME_RETRY		0
 #define CSMA_MODE		CSMA_UNSLOTTED
 
 #define ENABLE_ANTENNA_1                          (1)
