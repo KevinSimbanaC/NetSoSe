@@ -66,7 +66,7 @@ typedef struct
 	uint16_t add_origen;
 	char carga[maximo];
 	uint16_t FCS;
-}trama;
+}tramaData;
 
 /**
 * \brief This function needs to be edited by the user for adding application tasks

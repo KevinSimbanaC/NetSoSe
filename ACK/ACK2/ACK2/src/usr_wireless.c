@@ -52,17 +52,16 @@
 #include "usr_wireless.h"
 #include "wireless_config.h"
 
+#define MAX 114
+
 bool coord = true;
-bool envio = false;
+bool envio = true;
 int cont = 0;
-uint16_t secuencia = 0;
 
-char* mensajetx="test";
-char* mensaje="hola";
-char* mensajerx;
+char mensajetx [MAX];
+char mensajerx [MAX];
 
-trama trama_rx;
-trama trama_tx;
+tramaData trama_rx;
 
 
 /**
@@ -78,12 +77,14 @@ void usr_wireless_app_task(void)
 		// This code block will be called only if the transmission is enabled.
 		if (coord)
 		{
-			if( cont<1)
+			if( cont<2 && envio)
 			{
+				delay_ms(50);
 				cambiar(LEDA);
-				transmit_sample_frame((uint8_t*)mensajetx,4);
-				delay_ms(5000);
+				memset(&mensajetx,'a',sizeof(mensajetx));
+				transmit_sample_frame((uint8_t*)mensajetx,MAX);
 				cont ++;
+				envio = false;
 			}
 		}
 	#endif
@@ -110,35 +111,19 @@ void usr_frame_received_cb(frame_info_t *frame)
 
 		/* Toggle an LED in when frame is received */
 		/* led_toggle(); */
-		/*if (!coord)
+		if (!coord)
 		{
 			memset(&trama_rx,0,sizeof(trama_rx));
 			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
 			bmm_buffer_free(frame->buffer_header);
-			mensajerx = trama_rx.carga;
+			memset(&mensajerx,'b',sizeof(mensajerx));
 			cambiar(LEDA);
-			delay_ms(2000);
 			if(trama_rx.add_origen == 0x0001){
-				if(FCF_GET_FRAMETYPE(trama_rx.FCF & FCF_FRAMETYPE_MASK) == 0x01){
+				if(FCF_GET_FRAMETYPE(trama_rx.FCF & FCF_FRAMETYPE_MASK) == 0x01){ //Comprobacion tipo de trama (datos)
 					cambiar(LEDR);
-					delay_ms(2000);
-					envio = true;
-					transmit_sample_frame((uint8_t*)mensaje,4);
+					transmit_sample_frame((uint8_t*)mensajerx,MAX);
 				}
-			}
-			
-		}*/
-		if (coord)
-		{
-			//memset(&trama_rx,0,sizeof(trama_rx));
-			//memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
-			//bmm_buffer_free(frame->buffer_header);
-			//if(FCF_GET_FRAMETYPE(trama_rx.FCF & FCF_FRAMETYPE_MASK) == 0x02){
-				delay_ms(5000);
-			cambiar(LEDV);
-			delay_ms(5000);
-			cambiar(LEDV);
-			envio = true;
+			}	
 		}
 }	
 
@@ -153,15 +138,19 @@ void usr_frame_transmitted_cb(retval_t status, frame_info_t *frame)
 
 	/* Toggle an LED in user-interface */
 	/* led_toggle(); */
-		memset(&trama_tx,0,sizeof(trama_tx));
-		memcpy(&trama_tx,frame->mpdu,sizeof(trama_tx));
-		bmm_buffer_free(frame->buffer_header);
-		secuencia = trama_tx.nSec;
-		cambiar(LEDR);
-		if(FCF_GET_FRAMETYPE(trama_rx.FCF & FCF_FRAMETYPE_MASK) == 0x01){
-			//cambiar(LEDR);
-			delay_ms(1000);
-			//envio = false;
-			//transmit_sample_frame((uint8_t*)mensajerx,4);
+	if (coord)
+	{
+		if (status == 0xE9)
+		{
+			cambiar(LEDV);
+			
 		}
+		else
+		{
+			//delay_s(1);
+			cambiar(LEDR);
+			envio = true;
+
+		}
+	}
 }
