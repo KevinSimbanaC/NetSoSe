@@ -122,7 +122,7 @@ void stop_timer1(void);
  */
 uint8_t T_APP_TIMER1;
 
-#define TIMER_DURATION 9000000 //in µs
+#define TIMER_DURATION 2000000 //in µs
 //END OF TIMER related defns
 
 #endif

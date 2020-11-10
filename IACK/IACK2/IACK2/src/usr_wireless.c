@@ -2,7 +2,7 @@
 #include "usr_wireless.h"
 #include "wireless_config.h"
 
-#define MAX 114 //Constante para definir el payload maximo
+#define MAX 50 //Constante para definir el payload maximo
 
 bool coordinador = true; //TRUE=Cordinador y FALSE=Nodo cambiar segun el nodo a programar
 						  //Cambiar tambien la direccion de origen en wireless_config.h
@@ -14,6 +14,11 @@ trama trama_rx;//Estructura para recibir una trama. Se define en usr_wireless.h
 
 bool comparadorPayload = false;//Valor que me permite comparar el payload
 bool comparadorDir = false;//Valor que me permite comparar la direccion origen del nodo2 con la direccion destino del nodo1
+bool transmitir = true; // Para bloquear la tx y esperar para transmitir de nuevo
+bool tipoTx = true; // Para ver que tipo de mensaje enviar
+
+int contTramas = 0;
+
 /**
 * \brief This function needs to be edited by the user for adding application tasks
 */
@@ -25,15 +30,24 @@ void usr_wireless_app_task(void)
 	// This code block will be called only if the transmission is enabled.
 	
 	#ifdef TRANSMITTER_ENABLED		
-		//Si se presiona el boton SW2 empiezo a transmitir
-		if(!ioport_get_pin_level(GPIO_PUSH_BUTTON_0)){
-			if(coordinador){//Solo si es coordinador puede transmitir
-				
-				memset(&message,'0',sizeof(message));//Relleno mi cadena de ceros para enviarlos en el payload
-				transmit_sample_frame((uint8_t*)message,MAX);
-				delay_ms(1000);//Retardo para que no se envie otra trama y esperar que se suelte el boton
-			}
+		
+		if(coordinador){
+			if(contTramas < 2 && transmitir == true){//Solo si es coordinador puede transmitir
+				if(tipoTx){
+					memset(&message,'0',sizeof(message));//Relleno mi cadena de ceros para enviarlos en el payload
+					transmit_sample_frame((uint8_t*)message,MAX);
+				}
+				else {
+					memset(&message2,'1',sizeof(message2));
+					transmit_sample_frame((uint8_t*)message2,MAX);
+					tipoTx = true;
+				}
+				transmitir = false;
+				contTramas++;
+				delay_ms(10);//Retardo para que no se envie otra trama y esperar a procesar la siguiente trama
+			}		
 		}
+		
 		
 	#endif
 
@@ -64,6 +78,7 @@ void usr_frame_received_cb(frame_info_t *frame)
 			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
 			bmm_buffer_free(frame->buffer_header);
 			char *payload=trama_rx.carga;
+			
 			/*Se comprueba si la direccion de origen de la trama que llega es igual
 			a la direccion de origen con la que se envió la trama mas uno*/
 			if( (SRC_ADDR+1) == trama_rx.add_origen ){
@@ -79,7 +94,6 @@ void usr_frame_received_cb(frame_info_t *frame)
 			}
 			COMMUTAR_LED(LED1R);
 		}
-		
 }
 
 /**
@@ -89,11 +103,10 @@ void usr_frame_received_cb(frame_info_t *frame)
 */
 void usr_frame_transmitted_cb(retval_t status, frame_info_t *frame)
 {
-	
-	//En caso de que el payload y las direcciones concuerden entonces se envia la siguiente trama
 	if(comparadorPayload && comparadorDir){
-		memset(&message2,'1',sizeof(message2));
-		transmit_sample_frame((uint8_t*)message2,MAX);
+		transmitir = true;//Para volver a enviar la siguiente trama en usr_wireless_app_task
+		ENCENDER_LED(LED2G);
+		tipoTx = false; //Booleano que sirve para mandar el message2 en usr_wireless_app_task
 		comparadorPayload = false;//Para poder seguir comparando el payload
 		comparadorDir = false;//Para poder seguir comparando la dirección
 	}
