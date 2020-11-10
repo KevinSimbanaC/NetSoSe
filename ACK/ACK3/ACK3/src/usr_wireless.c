@@ -57,11 +57,12 @@
 bool coord = false;
 bool envio = true;
 int cont = 0;
-
+bool dormir = true;
 char mensajetx [MAX];
 char mensajerx [MAX];
 
 tramaData trama_rx;
+
 /**
 * \brief This function needs to be edited by the user for adding application tasks
 */
@@ -75,7 +76,7 @@ void usr_wireless_app_task(void)
 		// This code block will be called only if the transmission is enabled.
 		if (coord)
 		{
-			if(cont<3)
+			if(cont<4)
 			{
 				cambiar(LEDA);
 				memset(&mensajetx,'a',sizeof(mensajetx));
@@ -110,18 +111,24 @@ void usr_frame_received_cb(frame_info_t *frame)
 		/* Toggle an LED in when frame is received */
 		/* led_toggle(); */
 		
-		if (!coord)
+		if (!coord )
 		{
-			#ifdef TRANSMITTER_ENABLED
+				tal_trx_sleep(SLEEP_MODE_1);
 				
-			#endif
+				//tal_trx_wakeup();
+				/*if (tal_trx_wakeup() == 0x82)
+				{
+					cambiar(LEDR);
+					delay_s(2);
+					dormir = true;
+				}*/
+				
 			/*memset(&trama_rx,0,sizeof(trama_rx));
 			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
 			bmm_buffer_free(frame->buffer_header);
 			memset(&mensajerx,'b',sizeof(mensajerx));
 			cambiar(LEDR);
 			delay_ms(4000);
-			
 			transmit_sample_frame((uint8_t*)mensajerx,MAX);*/
 			
 		}
@@ -138,18 +145,12 @@ void usr_frame_transmitted_cb(retval_t status, frame_info_t *frame)
 
 	/* Toggle an LED in user-interface */
 	/* led_toggle(); */
-	/*if (coord)
+	if (!coord)
 	{
-		if (status == 0xE9)
+		if (status == 0x81) //Usar retval_t para comprobacion de status,compruebo estado sleep
 		{
 			cambiar(LEDV);
-			
+			delay_s(2);
 		}
-		else
-		{
-			//delay_s(1);
-			cambiar(LEDR);
-			envio = true;
-		}
-	}*/
+	}
 }
