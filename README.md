@@ -15,7 +15,7 @@ Se varía el tamaño del payload cambiando la constante MAX en usr_wireless.c. P
 ## ACK
 Carpeta que contiene tres codigos difrentes usando ACK explícito(Con ACK).
 ### ACK1
-Cñodigo en el que se envía una trama desde el coordinador al nodo, el nodo envía el ACK y transmite una trama hacia el coordinador.
+Código en el que se envía una trama desde el coordinador al nodo, el nodo envía el ACK y transmite una trama hacia el coordinador.
 Se varía el tamaño del payload cambiando la constante MAX en usr_wireless.c. Para diferenciar al momento de programar entre el coordinador o el nodo, cambiar la variable booleana coordinador en usr_wireless.c, las direcciones y en valor de la variable ACK Request(1 para el coordinador y 0 para el nodo) en wireless_config.h
 ### ACK2
 Código en el que se envía una trama desde el coordinador al nodo, el nodo envía el ACK y transmite una trama hacia el coordinador, posteriormente el coordinador envía la siguiente trama. En caso de que el coordinador no haya recibido el ACK no puede enviar la siguiente trama.
