@@ -51,13 +51,20 @@
 
 #include "usr_wireless.h"
 #include "wireless_config.h"
+#include <avr/interrupt.h>
+#include <avr/sleep.h>
 
 #define MAX 4
 
-bool coord = false;
+bool coord = true;
 bool envio = true;
+
 int cont = 0;
+int contSleep = 0;
+
 bool dormir = true;
+bool despertar = true;
+
 char mensajetx [MAX];
 char mensajerx [MAX];
 
@@ -76,7 +83,7 @@ void usr_wireless_app_task(void)
 		// This code block will be called only if the transmission is enabled.
 		if (coord)
 		{
-			if(cont<4)
+			if(cont<2)
 			{
 				cambiar(LEDA);
 				memset(&mensajetx,'a',sizeof(mensajetx));
@@ -85,6 +92,12 @@ void usr_wireless_app_task(void)
 				cont ++;
 				//envio = false;
 			}
+		}
+		if (!coord)
+		{
+			cambiar(LEDR);
+			delay_ms(50);
+			
 		}
 	#endif
 
@@ -113,16 +126,7 @@ void usr_frame_received_cb(frame_info_t *frame)
 		
 		if (!coord )
 		{
-				tal_trx_sleep(SLEEP_MODE_1);
-				
-				//tal_trx_wakeup();
-				/*if (tal_trx_wakeup() == 0x82)
-				{
-					cambiar(LEDR);
-					delay_s(2);
-					dormir = true;
-				}*/
-				
+			
 			/*memset(&trama_rx,0,sizeof(trama_rx));
 			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
 			bmm_buffer_free(frame->buffer_header);
@@ -145,12 +149,19 @@ void usr_frame_transmitted_cb(retval_t status, frame_info_t *frame)
 
 	/* Toggle an LED in user-interface */
 	/* led_toggle(); */
-	if (!coord)
+	if (coord)
 	{
-		if (status == 0x81) //Usar retval_t para comprobacion de status,compruebo estado sleep
+		if (status == 0xE9)
+		{
+			cambiar(LEDR);
+			delay_ms(2000);
+		} 
+		else
 		{
 			cambiar(LEDV);
-			delay_s(2);
+			delay_ms(2000);
 		}
+		
+		
 	}
 }
