@@ -55,9 +55,7 @@ void usr_wireless_app_task(void)
 * \param frame pointer to the received frame
 */
 void usr_frame_received_cb(frame_info_t *frame)
-{
-		
-		
+{		
 		if (!coordinador)
 		{
 			//delay_ms(2000);
@@ -70,7 +68,6 @@ void usr_frame_received_cb(frame_info_t *frame)
 				//memcpy(&payload,trama_rx.carga,11);
 				transmit_sample_frame((uint8_t*)B,4);
 			//}
-			
 		}		
 }
 

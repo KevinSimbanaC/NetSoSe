@@ -8,8 +8,8 @@
 /**
 * \brief This function needs to be edited by the user for adding application tasks
 */
-bool coordinador = false;
-bool transmitir = true;
+bool coordinador = false;//Valor que permite diferenciar entre un coordinador y un nodo
+bool transmitir = true;//Valor que permite bloquear la transmisión
 bool comparadorPayload = false;//Valor que me permite comparar el payload
 bool comparadorDir = false;//Valor que me permite comparar la direccion origen del nodo2 con la direccion destino del nodo1
 bool tipoTx = true; // Para ver que tipo de mensaje enviar
@@ -17,10 +17,10 @@ bool tipoTx = true; // Para ver que tipo de mensaje enviar
 char message[MAX];
 char message2[MAX];
 
-trama trama_rx;
+trama trama_rx;//Para obtener la trama recibida y manipularla
 
-int contRetransmision = 0;
-int contTramas = 0;
+int contRetransmision = 0;//Para limitar un máximo de retransmisiones
+int contTramas = 0;//Para limitar el numero de tramas enviadas por el coordinador
 
 void usr_wireless_app_task(void)
 {
@@ -33,11 +33,11 @@ void usr_wireless_app_task(void)
 	if(coordinador){	
 	
 		if(transmitir && contRetransmision<4 && contTramas<2){
-			if(tipoTx){
+			if(tipoTx){//Se envia el primer tipo de mensaje
 				memset(&message,'0',sizeof(message));//Relleno mi cadena de ceros para enviarlos en el payload
 				transmit_sample_frame((uint8_t*)message,MAX);
 			}
-			else {
+			else {//Se envia el segundo tipo de mensaje
 				memset(&message2,'1',sizeof(message2));
 				transmit_sample_frame((uint8_t*)message2,MAX);
 				tipoTx = true;
@@ -63,7 +63,7 @@ void usr_frame_received_cb(frame_info_t *frame)
 			memset(&trama_rx,0,sizeof(trama_rx));//Se vacia la trama
 			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));//Se copia la trama que llega en la estructura
 			bmm_buffer_free(frame->buffer_header);
-			if(trama_rx.nSec != 0x00 && trama_rx.nSec != 0x01){
+			if(trama_rx.nSec != 0x00){ //Si es la primera trama con numero de secuencia 0 no responde
 				char *payload=trama_rx.carga;//Se obtiene el payload recibido
 				transmit_sample_frame((uint8_t*)payload,MAX);//Se vuelve a transmitir el mensaje recibido
 			}
@@ -98,24 +98,25 @@ void usr_frame_received_cb(frame_info_t *frame)
 */
 void usr_frame_transmitted_cb(retval_t status, frame_info_t *frame)
 {
-	if(comparadorPayload && comparadorDir){
+	if(comparadorPayload && comparadorDir){//Booleanos que son modificados tambien en usr_frame_received_cb()
 		COMMUTAR_LED(LED1R);
-		transmitir = true;
+		transmitir = true;//Se vuelve a habilitar la transmision para enviar otra trama en usr_wireless_app_task
 		tipoTx = false; //Booleano que sirve para mandar el message2 en usr_wireless_app_task
-		contTramas++;
-		contRetransmision=0;
+		contTramas++;//Se aumeta el contador para limitar las tramas enviadas en usr_wireless_app_task(void)
+		contRetransmision=0;//En caso de que si exista respuesta y la comparacion sea exitosa entonce el contador de retransmision se resetea
 		comparadorPayload = false;//Para poder seguir comparando el payload
 		comparadorDir = false;//Para poder seguir comparando la dirección
 	}else{
-		start_timer1();
+		//Se inicia el timer para transmitir otra trama en caso de que no exista respuesta por parte del nodo
+		start_timer1(); 
 	}
 }
 
 void usr_app_timer_cb(void *parameter){
 	
 	COMMUTAR_LED(LED3Y);
-	transmitir=true;
-	contRetransmision++;
-	stop_timer1();
+	transmitir=true;//Se habilita la transmision de nuevo para transmitir otra trama
+	contRetransmision++;//Se aumenta el contador de retransmisión (se admite máximo 4 retransmisiones)
+	stop_timer1();//Se detiene el timer
 	
 }
