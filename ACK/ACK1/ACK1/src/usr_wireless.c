@@ -51,13 +51,21 @@
 
 #include "usr_wireless.h"
 #include "wireless_config.h"
+
+//Constante para definir el tamaño del payload
 #define MAX 114
 
+//Variable para manejar cuando es coordinador o nodo
 bool coord = false;
+
+//Variable para manejar el número de tramas que serán enviadas por el coordinador
 int cont = 0;
+
+//Variables para envio y recepcion de un mensaje en el payload 
 char mensajetx[MAX];
 char mensajerx[MAX];
 
+//Variable para receptar la trama que fue declarada en usr_wireless.h
 trama trama_rx;
 /**
 * \brief This function needs to be edited by the user for adding application tasks
@@ -68,19 +76,27 @@ void usr_wireless_app_task(void)
 	// This function will be called repeatedly from main.c. (Refer to function app_task(), WirelessTask() in main.c)
 	// The following code demonstrates transmission of a sample packet frame every 1 second.
 	
+	//Transmision habilitada
 	#ifdef TRANSMITTER_ENABLED		
 		// This code block will be called only if the transmission is enabled.
+		//Blanqueo (vacío) la variable mensajetx
 		memset(&mensajetx,0,sizeof(mensajetx));
+		//Validacion de que sea coordinador
 		if (coord)
 		{
+			//Validacion del contador para que se envien solamente tres tramas
 			if( cont<3)
 			{
+				//Llenar con el caracter "a" la variable mensajetx para su envío
 				for (int i=0;i<MAX;i++)
 				{
 					mensajetx[i]='a';
 				}
+				//Transmisión de la trama dentro del payload se encuentra el contenido de mensajetx
 				transmit_sample_frame((uint8_t*)mensajetx,MAX);
+				//Delay de 50 ms necesario para que continúe la transmisión caso contrario se interrumpe
 				delay_ms(50);
+				//Aumento el contador
 				cont ++;
 			}
 		}
@@ -108,17 +124,26 @@ void usr_frame_received_cb(frame_info_t *frame)
 
 		/* Toggle an LED in when frame is received */
 		/* led_toggle(); */
+		
+		//Validación de que no sea coordinador, es decir, es nodo.
 		if (!coord)
 		{
+			//Blanqueo la variable mensajerx
 			memset(&mensajerx,0,sizeof(mensajerx));
+			//Blanqueo la trama de recepcion
 			memset(&trama_rx,0,sizeof(trama_rx));
+			//Copio la mpdu de la trama recibida en la trama creada trama_rx
 			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
+			//Vacío el buffer para la siguiente recepción
 			bmm_buffer_free(frame->buffer_header);
 			//mensajerx = trama_rx.carga;
+			
+			//Llenar con el caracter "b" la variable mensajetx para su envío
 			for (int i=0;i<MAX;i++)
 			{
 				mensajerx[i]='b';
 			}
+			//Transmisión de la trama, dentro del payload se encuentra el contenido de mensajerx
 			transmit_sample_frame((uint8_t*)mensajerx,MAX);
 		}
 }
