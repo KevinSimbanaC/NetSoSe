@@ -33,7 +33,7 @@ void usr_wireless_app_task(void)
 		
 		if(coordinador){
 			if(contTramas < 2 && transmitir == true){//Solo si es coordinador puede transmitir
-				if(tipoTx){
+				if(tipoTx){//Para saber si enviar la primera trama 
 					memset(&message,'0',sizeof(message));//Relleno mi cadena de ceros para enviarlos en el payload
 					transmit_sample_frame((uint8_t*)message,MAX);
 				}
@@ -107,7 +107,7 @@ void usr_frame_transmitted_cb(retval_t status, frame_info_t *frame)
 		transmitir = true;//Para volver a enviar la siguiente trama en usr_wireless_app_task
 		ENCENDER_LED(LED2G);
 		tipoTx = false; //Booleano que sirve para mandar el message2 en usr_wireless_app_task
-		comparadorPayload = false;//Para poder seguir comparando el payload
-		comparadorDir = false;//Para poder seguir comparando la dirección
+		comparadorPayload = false;//Para poder seguir comparando el payload en usr_frame_received_cb()
+		comparadorDir = false;//Para poder seguir comparando la dirección en usr_frame_received_cb()
 	}
 }

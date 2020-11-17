@@ -8,7 +8,7 @@
 /**
 * \brief This function needs to be edited by the user for adding application tasks
 */
-bool coordinador = false;//Valor que permite diferenciar entre un coordinador y un nodo
+bool coordinador = true;//Valor que permite diferenciar entre un coordinador y un nodo
 bool transmitir = true;//Valor que permite bloquear la transmisión
 bool comparadorPayload = false;//Valor que me permite comparar el payload
 bool comparadorDir = false;//Valor que me permite comparar la direccion origen del nodo2 con la direccion destino del nodo1
@@ -103,7 +103,8 @@ void usr_frame_transmitted_cb(retval_t status, frame_info_t *frame)
 		transmitir = true;//Se vuelve a habilitar la transmision para enviar otra trama en usr_wireless_app_task
 		tipoTx = false; //Booleano que sirve para mandar el message2 en usr_wireless_app_task
 		contTramas++;//Se aumeta el contador para limitar las tramas enviadas en usr_wireless_app_task(void)
-		contRetransmision=0;//En caso de que si exista respuesta y la comparacion sea exitosa entonce el contador de retransmision se resetea
+		contRetransmision=0;//En caso de que si exista respuesta y la comparacion sea exitosa entonces
+							// el contador de retransmision se resetea
 		comparadorPayload = false;//Para poder seguir comparando el payload
 		comparadorDir = false;//Para poder seguir comparando la dirección
 	}else{
@@ -120,3 +121,4 @@ void usr_app_timer_cb(void *parameter){
 	stop_timer1();//Se detiene el timer
 	
 }
+
