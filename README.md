@@ -19,7 +19,8 @@ El nodo  responde a la segunda trama recibida enviando la misma trama(payload) h
 ### IACK4
 Código que programa tres nodos distintos (Txn, Ixn, Rxn) en una topología lineal. El nodo Txn envia una trama por broadcast la cual será recibidad por los nodos Ixn y Rxn, el nodo Ixn solo recibe la trama enviada por el nodo Txn mientras que el nodo Rxn recibe la trama, la procesa y reenvia su payload a los siguientes nodos.
 Para diferenciar al momento de programar entre los nodos cambiar la variable char tipoNodo = <Txn|Ixn|Rxn> en usr_wireless.c segun el nodo a progamar y las direcciones asignadas a cada nodo en wireless_config.h
-
+### IACK5
+Código creado con la intención de simular un nodo averiado. Código aún no completado.
 ## ACK
 Carpeta que contiene dos codigos difrentes usando ACK explícito(Con ACK).
 ### ACK1
