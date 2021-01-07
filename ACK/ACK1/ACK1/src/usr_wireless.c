@@ -53,7 +53,7 @@
 #include "wireless_config.h"
 
 //Constante para definir el tamaño del payload
-#define MAX 114
+#define MAX 12
 
 //Variable para manejar cuando es coordinador o nodo
 bool coord = false;
