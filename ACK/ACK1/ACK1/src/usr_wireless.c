@@ -56,7 +56,7 @@
 #define MAX 12
 
 //Variable para manejar cuando es coordinador o nodo
-bool coord = false;
+bool coord = true;
 
 //Variable para manejar el número de tramas que serán enviadas por el coordinador
 int cont = 0;
@@ -95,7 +95,7 @@ void usr_wireless_app_task(void)
 				//Transmisión de la trama dentro del payload se encuentra el contenido de mensajetx
 				transmit_sample_frame((uint8_t*)mensajetx,MAX);
 				//Delay de 50 ms necesario para que continúe la transmisión caso contrario se interrumpe
-				delay_ms(50);
+				delay_us(2350);
 				//Aumento el contador
 				cont ++;
 			}
@@ -126,7 +126,7 @@ void usr_frame_received_cb(frame_info_t *frame)
 		/* led_toggle(); */
 		
 		//Validación de que no sea coordinador, es decir, es nodo.
-		if (!coord)
+		/*if (!coord)
 		{
 			//Blanqueo la variable mensajerx
 			memset(&mensajerx,0,sizeof(mensajerx));
@@ -145,7 +145,7 @@ void usr_frame_received_cb(frame_info_t *frame)
 			}
 			//Transmisión de la trama, dentro del payload se encuentra el contenido de mensajerx
 			transmit_sample_frame((uint8_t*)mensajerx,MAX);
-		}
+		}*/
 }
 
 /**
