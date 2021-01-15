@@ -78,7 +78,7 @@ void usr_wireless_app_task(void)
 		{
 			//Validacion del contador para que se envien solamente dos tramas
 			//y que envie la siguiente una vez recibido el ACK
-			if( cont<2)
+			if( cont<3)
 			{
 				
 				//Uso de un LED para comprobar si se cumple o no la validación mediante el if
@@ -86,8 +86,7 @@ void usr_wireless_app_task(void)
 				memset(&mensajetx,'a',sizeof(mensajetx));
 				//Transmisión de la trama, dentro del payload se encuentra el contenido de mensajetx
 				transmit_sample_frame((uint8_t*)mensajetx,MAX);
-				//Delay de 50 ms necesario para que continúe la transmisión caso contrario se interrumpe
-				delay_ms(1);
+				delay_us(2000);
 				//Aumento el contador
 				cont ++;
 			}
