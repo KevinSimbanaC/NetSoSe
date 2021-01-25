@@ -53,7 +53,7 @@
 #include "wireless_config.h"
 
 //Constante para definir el tamaño del payload
-#define MAX 12
+#define MAX 114
 
 //Variable para manejar cuando es coordinador o nodo
 bool coord = true;
@@ -86,7 +86,7 @@ void usr_wireless_app_task(void)
 				memset(&mensajetx,'a',sizeof(mensajetx));
 				//Transmisión de la trama, dentro del payload se encuentra el contenido de mensajetx
 				transmit_sample_frame((uint8_t*)mensajetx,MAX);
-				delay_us(2000);
+				delay_us(3100);
 				//Aumento el contador
 				cont ++;
 			}
