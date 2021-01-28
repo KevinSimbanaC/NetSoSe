@@ -52,6 +52,19 @@
 #include "usr_wireless.h"
 #include "wireless_config.h"
 
+//Constante para definir el tamaño del payload
+#define MAX 12
+
+//Variable para manejar cuando es coordinador o nodo
+bool coord = true;
+
+//Variable para manejar el número de tramas que serán enviadas por el coordinador
+int cont = 0;
+
+//Variables para envio y recepcion de un mensaje en el payload
+char mensajetx [MAX];
+trama trama_rx;
+char* mensajerx;
 
 /**
 * \brief This function needs to be edited by the user for adding application tasks
@@ -62,10 +75,24 @@ void usr_wireless_app_task(void)
 	// This function will be called repeatedly from main.c. (Refer to function app_task(), WirelessTask() in main.c)
 	// The following code demonstrates transmission of a sample packet frame every 1 second.
 
-	#ifdef TRANSMITTER_ENABLED		
-		// This code block will be called only if the transmission is enabled.
-		transmit_sample_frame((uint8_t*)"Hello World!", 12);	
-		delay_ms(1000);
+	#ifdef TRANSMITTER_ENABLED
+	if (coord)
+	{
+		//Validacion del contador para que se envien solamente dos tramas
+		//y que envie la siguiente una vez recibido el ACK
+		if( cont<5)
+		{
+			
+			//Uso de un LED para comprobar si se cumple o no la validación mediante el if
+			//Llenar con el caracter "a" la variable mensajetx para su envío
+			memset(&mensajetx,'a',sizeof(mensajetx));
+			//Transmisión de la trama, dentro del payload se encuentra el contenido de mensajetx
+			transmit_sample_frame((uint8_t*)mensajetx,MAX);
+			//delay_us(2500);
+			//Aumento el contador
+			//cont ++;
+		}
+	}
 	#endif
 
 	/* Examples : */
@@ -87,7 +114,18 @@ void usr_wireless_app_task(void)
 void usr_frame_received_cb(frame_info_t *frame)
 {
 		//TODO (Project Wizard) - Add application task when the frame is received
-
+		if (!coord)
+		{
+			//Blanqueo la trama de recepcion
+			memset(&trama_rx,0,sizeof(trama_rx));
+			//Copio la mpdu de la trama recibida en la trama creada trama_rx
+			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
+			//Vacío el buffer para la siguiente recepción
+			bmm_buffer_free(frame->buffer_header);
+			mensajerx = trama_rx.carga;
+			transmit_sample_frame((uint8_t*)mensajerx,MAX);
+			cont ++;
+		}
 		/* Toggle an LED in when frame is received */
 		/* led_toggle(); */
 }
