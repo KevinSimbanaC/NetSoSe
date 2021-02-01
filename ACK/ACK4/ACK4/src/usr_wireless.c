@@ -53,7 +53,7 @@
 #include "wireless_config.h"
 
 //Constante para definir el tamaño del payload
-#define MAX 12
+#define MAX 114
 
 //Variable para manejar cuando es coordinador o nodo
 bool coord = true;
@@ -80,7 +80,7 @@ void usr_wireless_app_task(void)
 	{
 		//Validacion del contador para que se envien solamente dos tramas
 		//y que envie la siguiente una vez recibido el ACK
-		if( cont<5)
+		if( cont<1)
 		{
 			
 			//Uso de un LED para comprobar si se cumple o no la validación mediante el if
@@ -90,7 +90,7 @@ void usr_wireless_app_task(void)
 			transmit_sample_frame((uint8_t*)mensajetx,MAX);
 			//delay_us(2500);
 			//Aumento el contador
-			//cont ++;
+			cont ++;
 		}
 	}
 	#endif
@@ -124,7 +124,6 @@ void usr_frame_received_cb(frame_info_t *frame)
 			bmm_buffer_free(frame->buffer_header);
 			mensajerx = trama_rx.carga;
 			transmit_sample_frame((uint8_t*)mensajerx,MAX);
-			cont ++;
 		}
 		/* Toggle an LED in when frame is received */
 		/* led_toggle(); */
