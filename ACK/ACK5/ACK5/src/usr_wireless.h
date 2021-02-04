@@ -54,6 +54,20 @@
 
 #include "wireless_api.h"
 
+#define maximo 121
+
+typedef struct
+{
+	uint8_t longitud;
+	uint16_t FCF;
+	uint8_t nSec;
+	uint16_t PAN_dest;
+	uint16_t add_dest;
+	uint16_t add_origen;
+	char carga[maximo];
+	uint16_t FCS;
+}trama;
+
 /**
 * \brief This function needs to be edited by the user for adding application tasks
 */
