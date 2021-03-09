@@ -2,7 +2,7 @@
 #include "usr_wireless.h"
 #include "wireless_config.h"
 
-#define MAX 50 //Constante para definir el payload maximo
+#define MAX 12 //Constante para definir el payload maximo
 
 bool coordinador = true; //TRUE=Cordinador y FALSE=Nodo cambiar segun el nodo a programar
 						  //Cambiar tambien la direccion de origen en wireless_config.h
@@ -44,7 +44,7 @@ void usr_wireless_app_task(void)
 				}
 				transmitir = false;
 				contTramas++;
-				delay_ms(10);//Retardo para que no se envie otra trama y esperar a procesar la siguiente trama
+				delay_ms(4);//Retardo para procesar la trama y esperar enviar la siguiente trama
 			}		
 		}
 		
