@@ -52,6 +52,19 @@
 #include "usr_wireless.h"
 #include "wireless_config.h"
 
+//Constante para definir el tamaño del payload
+#define MAX 6
+
+//Variable para manejar cuando es coordinador o nodo
+bool coord = true;
+
+//Variable para manejar el número de tramas que serán enviadas por el coordinador
+int cont = 0;
+
+//Variables para envio y recepcion de un mensaje en el payload
+char* mensajetx;
+trama trama_rx;
+char* mensajerx;
 
 /**
 * \brief This function needs to be edited by the user for adding application tasks
@@ -62,10 +75,15 @@ void usr_wireless_app_task(void)
 	// This function will be called repeatedly from main.c. (Refer to function app_task(), WirelessTask() in main.c)
 	// The following code demonstrates transmission of a sample packet frame every 1 second.
 
-	#ifdef TRANSMITTER_ENABLED		
-		// This code block will be called only if the transmission is enabled.
-		transmit_sample_frame((uint8_t*)"Hello World!", 12);	
-		delay_ms(1000);
+	#ifdef TRANSMITTER_ENABLED
+	if(cont<1)
+	{
+		mensajetx = "alarma";
+		transmit_sample_frame((uint8_t*)mensajetx,MAX);
+		delay_us(3800);
+		//Aumento el contador
+		cont ++;
+	}
 	#endif
 
 	/* Examples : */
