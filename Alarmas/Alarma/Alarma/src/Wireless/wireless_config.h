@@ -58,13 +58,13 @@
 
 #define DEFAULT_PAN_ID          0xCAFE
 
-#define SRC_ADDR				0x0001
+#define SRC_ADDR				0x0009
 #define SRC_PAN_ID              0xCAFE
 
 #define CHANNEL_TRANSMIT_RECEIVE		18
 #define CHANNEL_PAGE_TRANSMIT_RECEIVE	0
 
-#define DST_ADDR		0xFFFF
+#define DST_ADDR		0x0001
 #define DST_PAN_ID      0xCAFE
 #define ACK_REQ			0
 #define FRAME_RETRY		0

@@ -52,20 +52,25 @@
 #include "usr_wireless.h"
 #include "wireless_config.h"
 
+
 //Constante para definir el tamaño del payload
 #define MAX 6
 
 //Variable para manejar cuando es coordinador o nodo
-bool coord = true;
+bool genAlarma = false;
+bool recepcion = false;
 
 //Variable para manejar el número de tramas que serán enviadas por el coordinador
 int cont = 0;
 
 //Variables para envio y recepcion de un mensaje en el payload
 char* mensajetx;
-trama trama_rx;
+char* mensajetxint;
 char* mensajerx;
+char* mensajerxint;
 
+trama trama_rx;
+trama trama_int;
 /**
 * \brief This function needs to be edited by the user for adding application tasks
 */
@@ -76,13 +81,16 @@ void usr_wireless_app_task(void)
 	// The following code demonstrates transmission of a sample packet frame every 1 second.
 
 	#ifdef TRANSMITTER_ENABLED
-	if(cont<1)
+	if(genAlarma)
 	{
-		mensajetx = "alarma";
-		transmit_sample_frame((uint8_t*)mensajetx,MAX);
-		delay_us(3800);
-		//Aumento el contador
-		cont ++;
+		if(cont<1)
+		{
+			mensajetx = "alarma";
+			transmit_sample_frame((uint8_t*)mensajetx,MAX);
+			delay_ms(1000);
+			//Aumento el contador
+			cont ++;
+		}
 	}
 	#endif
 
@@ -105,7 +113,51 @@ void usr_wireless_app_task(void)
 void usr_frame_received_cb(frame_info_t *frame)
 {
 		//TODO (Project Wizard) - Add application task when the frame is received
-
+		recepcion = true;
+		if(recepcion)
+		{
+			if (trama_rx.add_origen == SRC_ADDR-1)
+			{
+				memset(&trama_int,0,sizeof(trama_int));
+				memcpy(&trama_int,frame->mpdu,sizeof(trama_int));
+				bmm_buffer_free(frame->buffer_header);
+				mensajerxint = trama_int.carga;
+				mensajetxint = "NINT";
+				transmit_sample_frame((uint8_t*)mensajetxint,4);
+			}
+			else
+			{
+				if (trama_rx.add_origen == SRC_ADDR-2)
+				{
+					memset(&trama_rx,0,sizeof(trama_rx));
+					memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
+					bmm_buffer_free(frame->buffer_header);
+					mensajerx = trama_rx.carga;
+					if (mensajerx == mensajerxint)
+					{
+						transmit_sample_frame((uint8_t*)"Buffer",6);
+					} 
+					else
+					{
+						transmit_sample_frame((uint8_t*)"hey",3);
+					}
+				}
+				else
+				{
+					memset(&trama_rx,0,sizeof(trama_rx));
+					memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
+					bmm_buffer_free(frame->buffer_header);
+					mensajerx = trama_rx.carga;
+					transmit_sample_frame((uint8_t*)"hola",4);
+				}
+			}
+			
+		}
+		else
+		{
+			usr_wireless_app_task();
+		}
+		
 		/* Toggle an LED in when frame is received */
 		/* led_toggle(); */
 }
