@@ -51,18 +51,18 @@
 
 #include "usr_wireless.h"
 #include "wireless_config.h"
-
+#include <avr/eeprom.h> 
 
 //Constante para definir el tamaño del payload
 #define MAX 6
-
+#define ADRESS_5 0
 //Variable para manejar cuando es coordinador o nodo
 bool genAlarma = false;
 bool recepcion = false;
 
 //Variable para manejar el número de tramas que serán enviadas por el coordinador
 int cont = 0;
-
+uint8_t n;
 //Variables para envio y recepcion de un mensaje en el payload
 char* mensajetx;
 char* mensajetxint;
@@ -116,39 +116,38 @@ void usr_frame_received_cb(frame_info_t *frame)
 		recepcion = true;
 		if(recepcion)
 		{
+			memset(&trama_rx,0,sizeof(trama_rx));
+			memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
+			bmm_buffer_free(frame->buffer_header);
+			
 			if (trama_rx.add_origen == SRC_ADDR-1)
 			{
-				memset(&trama_int,0,sizeof(trama_int));
-				memcpy(&trama_int,frame->mpdu,sizeof(trama_int));
-				bmm_buffer_free(frame->buffer_header);
-				mensajerxint = trama_int.carga;
+				mensajerxint = trama_rx.carga;
 				mensajetxint = "NINT";
+				eeprom_write_byte(ADRESS_5, 0x01);
 				transmit_sample_frame((uint8_t*)mensajetxint,4);
 			}
 			else
 			{
 				if (trama_rx.add_origen == SRC_ADDR-2)
 				{
-					memset(&trama_rx,0,sizeof(trama_rx));
-					memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
-					bmm_buffer_free(frame->buffer_header);
 					mensajerx = trama_rx.carga;
-					if (mensajerx == mensajerxint)
+					mensajetx = "RXN";
+					transmit_sample_frame((uint8_t*)mensajetx,3);
+					n=eeprom_read_byte(ADRESS_5);
+					if (n == 0x01)
 					{
 						transmit_sample_frame((uint8_t*)"Buffer",6);
 					} 
 					else
 					{
-						transmit_sample_frame((uint8_t*)"hey",3);
+						transmit_sample_frame((uint8_t*)mensajerx,strlen(mensajerx));
 					}
 				}
 				else
 				{
-					memset(&trama_rx,0,sizeof(trama_rx));
-					memcpy(&trama_rx,frame->mpdu,sizeof(trama_rx));
-					bmm_buffer_free(frame->buffer_header);
 					mensajerx = trama_rx.carga;
-					transmit_sample_frame((uint8_t*)"hola",4);
+					transmit_sample_frame((uint8_t*)mensajerx,strlen(mensajerx));
 				}
 			}
 			
