@@ -57,7 +57,7 @@
 #define MAX 6
 #define ADRESS_5 0
 //Variable para manejar cuando es coordinador o nodo
-bool genAlarma = false;
+bool genAlarma = true;
 bool recepcion = false;
 
 //Variable para manejar el número de tramas que serán enviadas por el coordinador
@@ -68,6 +68,7 @@ char* mensajetx;
 char* mensajetxint;
 char* mensajerx;
 char* mensajerxint;
+char* mensaje2;
 
 trama trama_rx;
 trama trama_int;
@@ -124,37 +125,27 @@ void usr_frame_received_cb(frame_info_t *frame)
 			{
 				mensajerxint = trama_rx.carga;
 				mensajetxint = "NINT";
-				eeprom_write_byte(ADRESS_5, 0x01);
 				transmit_sample_frame((uint8_t*)mensajetxint,4);
+			}
+			else if (trama_rx.add_origen == SRC_ADDR-2)
+			{
+				mensajerx = trama_rx.carga;
+				mensajetx = "RXN";
+				transmit_sample_frame((uint8_t*)mensajetx,3);
 			}
 			else
 			{
-				if (trama_rx.add_origen == SRC_ADDR-2)
+				if (trama_rx.add_origen > SRC_ADDR)
 				{
-					mensajerx = trama_rx.carga;
-					mensajetx = "RXN";
-					transmit_sample_frame((uint8_t*)mensajetx,3);
-					n=eeprom_read_byte(ADRESS_5);
-					if (n == 0x01)
-					{
-						transmit_sample_frame((uint8_t*)"Buffer",6);
-					} 
-					else
-					{
-						transmit_sample_frame((uint8_t*)mensajerx,strlen(mensajerx));
-					}
+					mensaje2 = "NODO POSTERIOR";
+					transmit_sample_frame((uint8_t*)mensajerx,14);
 				}
-				else
-				{
-					mensajerx = trama_rx.carga;
-					transmit_sample_frame((uint8_t*)mensajerx,strlen(mensajerx));
-				}
+				
 			}
-			
 		}
 		else
 		{
-			usr_wireless_app_task();
+			//usr_wireless_app_task();
 		}
 		
 		/* Toggle an LED in when frame is received */
