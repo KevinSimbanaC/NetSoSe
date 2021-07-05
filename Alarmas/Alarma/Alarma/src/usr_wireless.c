@@ -125,15 +125,7 @@ void usr_frame_received_cb(frame_info_t *frame)
 			{
 				mensajerxint = trama_rx.carga;
 				mensajetxint = "NINT";
-				if (strcmp(mensajerxint,"alarma"))
-				{
-					transmit_sample_frame((uint8_t*)mensajetxint,4);
-				} 
-				else
-				{
-					
-				}
-				
+				transmit_sample_frame((uint8_t*)mensajetxint,4);
 			}
 			else if (trama_rx.add_origen == SRC_ADDR-2)
 			{
