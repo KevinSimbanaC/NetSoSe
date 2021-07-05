@@ -57,7 +57,7 @@
 #define MAX 6
 #define ADRESS_5 0
 //Variable para manejar cuando es coordinador o nodo
-bool genAlarma = true;
+bool genAlarma = false;
 bool recepcion = false;
 
 //Variable para manejar el número de tramas que serán enviadas por el coordinador
@@ -125,7 +125,15 @@ void usr_frame_received_cb(frame_info_t *frame)
 			{
 				mensajerxint = trama_rx.carga;
 				mensajetxint = "NINT";
-				transmit_sample_frame((uint8_t*)mensajetxint,4);
+				if (strcmp(mensajerxint,"alarma"))
+				{
+					transmit_sample_frame((uint8_t*)mensajetxint,4);
+				} 
+				else
+				{
+					
+				}
+				
 			}
 			else if (trama_rx.add_origen == SRC_ADDR-2)
 			{
@@ -138,7 +146,7 @@ void usr_frame_received_cb(frame_info_t *frame)
 				if (trama_rx.add_origen > SRC_ADDR)
 				{
 					mensaje2 = "NODO POSTERIOR";
-					transmit_sample_frame((uint8_t*)mensajerx,14);
+					transmit_sample_frame((uint8_t*)mensaje2,14);
 				}
 				
 			}

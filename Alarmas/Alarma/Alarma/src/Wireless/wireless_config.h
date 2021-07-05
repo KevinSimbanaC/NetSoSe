@@ -58,7 +58,7 @@
 
 #define DEFAULT_PAN_ID          0xCAFE
 
-#define SRC_ADDR				0x0007
+#define SRC_ADDR				0x0009
 #define SRC_PAN_ID              0xCAFE
 
 #define CHANNEL_TRANSMIT_RECEIVE		18
